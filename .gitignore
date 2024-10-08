@@ -1,0 +1,6 @@
+.venv
+.idea
+**/__pycache__/
+soul_mate/db.sqlite3
+test.py
+test2.py

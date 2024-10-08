@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+    <table border="1">
+        <tr>
+            <td>
+                {% include './inc/tree.html' %}
+            </td>
+            {% if items %}
+                <td>
+                    <table border="1">
+                        {% for item in pager %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                
+                    {% if pager.paginator.num_pages > 1 %}
+                        {% if pager.has_previous %}
+                            <a href="?page={{ pager.previous_page_number }}">&lt;</a>
+                        {% endif %}
+                        {% for item in pager.paginator.page_range %}
+                            {% if pager.number == item %}
+                                <a href="?page={{ item }}" style="color: red">{{ item }}</a>
+                            {% elif item >= pager.number|add:-2 and item <= pager.number|add:2 %}
+                                <a href="?page={{ item }}">{{ item }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        {% if pager.has_next %}
+                            <a href="?page={{ pager.next_page_number }}">&gt;</a>
+                        {% endif %}
+                    {% endif %}
+                
+                </td>
+            {% endif %}
+        </tr>
+    </table>
+{% endblock %}

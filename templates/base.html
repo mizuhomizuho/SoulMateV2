@@ -1,0 +1,17 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>SoulMate</title>
+    <link href="{% static 'app_main/css/style.css' %}" type="text/css"  rel="stylesheet" />
+</head>
+<body>
+    | <a href="/">Home</a>
+    | <a href="/admin/">Admin</a>
+    | <a href="/clear-cache/">Clear cache</a>
+    | <a href="/catalog/">Catalog</a>
+    <hr>
+    {% block content %} {% endblock %}
+</body>
+</html>
