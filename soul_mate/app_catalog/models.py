@@ -11,16 +11,18 @@ class TreeManager(models.Manager):
     __paths: dict[int, list[int]] = {}
 
     def get(self) -> dict[str, Union[dict[int, list[int]], dict[int, dict]]]:
+
         res = cache.get('sections_tree_manager_result_cache')
         if not res:
             res = {
-                'tree': self.__build(),
+                'tree': self.__sort(self.__build()),
                 'paths': self.__paths,
             }
             cache.set('sections_tree_manager_result_cache', res, 3600 * 24 * 365 * 888)
         return res
 
     def get_el(self, el_id: int) -> 'Sections':
+
         res = self.get()
         if res['paths'].get(el_id) is None:
             return res['tree'][el_id]
@@ -30,12 +32,26 @@ class TreeManager(models.Manager):
             }]["children"][{el_id}]'
         )
 
+    def __sort(self, tree: dict[int, dict[str, dict]]) -> dict[int, dict[str, dict]]:
+
+        for_sort: dict = {}
+        for res_key in list(tree):
+            for_sort[res_key] = tree[res_key]['el'].sort
+            if 'children' in tree[res_key]:
+                tree[res_key]['children'] = self.__sort(tree[res_key]['children'])
+        sort_res = dict(sorted(for_sort.items(), key=lambda item: item[1]))
+        res_sorted = {}
+        for sort_res_key in list(sort_res):
+            res_sorted[sort_res_key] = tree[sort_res_key]
+        return res_sorted
+
     def __build(
         self,
         el_id: Optional[int] = None,
         els: Optional[dict[int, dict[str, Optional[Union[int, str]]]]] = None,
         path: Optional[list[int]] = None,
     ) -> dict[int, dict[str, dict]]:
+
         res = {}
         if el_id is None:
             els = {}
@@ -56,16 +72,6 @@ class TreeManager(models.Manager):
                 else:
                     self.__paths[item_k] = cat_path
                 res[item_k] = {'el': item_v}
-
-                for_sort: dict = {}
-                for res_key in list(res):
-                    for_sort[res_key] = res[res_key]['el'].sort
-                sort_res = dict(sorted(for_sort.items(), key=lambda item: item[1]))
-                res_serted = {}
-                for sort_res_key in list(sort_res):
-                    res_serted[sort_res_key] = res[sort_res_key]
-                res = res_serted
-
                 del els[item_k]
                 res[item_k]['children'] = self.__build(item_k, els, cat_path)
                 if not res[item_k]['children']:

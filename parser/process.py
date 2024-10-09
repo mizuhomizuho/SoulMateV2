@@ -2,21 +2,15 @@ import time
 import ctypes
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
-from parser.main import SoulMate
-import os
-import django
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'soul_mate.settings')
-django.setup()
-
+from parser.main import Step1
 from app_catalog.models import Elements
 from app_main.models import Options
 
-class SoulMateProcess:
+class Step1Process:
 
-    __parent: SoulMate
+    __parent: Step1
 
-    def __init__(self, parent: SoulMate):
+    def __init__(self, parent: Step1):
         self.__parent = parent
 
     def __end_signal(self) -> None:
