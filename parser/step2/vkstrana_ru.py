@@ -27,7 +27,11 @@ class VkstranaRu(Step2Base):
 		if not isinstance(vk_id, int):
 			return
 
-		req = requests.get(f'https://{self.HOST}/{vk_id}', self._get_headers())
+		try:
+			req = self._request(f'https://{self.HOST}/{vk_id}')
+		except requests.exceptions.Timeout:
+			print('Timed out')
+			return
 
 		if req.status_code == 404:
 			self._set_continue()
@@ -35,6 +39,10 @@ class VkstranaRu(Step2Base):
 
 		if req.status_code == 502:
 			print('Internal Server Error 502...')
+			return
+
+		if req.status_code == 504:
+			print('Internal Server Error 504...')
 			return
 
 		if req.status_code != 200:

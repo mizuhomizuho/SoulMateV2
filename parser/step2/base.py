@@ -1,6 +1,7 @@
 from typing import Any, Optional
 import time
 from datetime import datetime
+import requests
 from app_catalog.models import Elements
 from parser.base import Base
 
@@ -16,15 +17,12 @@ class Step2Base:
 	__cur_item: Elements
 	__pull_el: Any
 
-	def _get_headers(self, host: Optional[str] = None) -> dict[str, str]:
-
-		if host is None:
-			host = self.__pull_el.HOST
+	def __get_headers(self) -> dict[str, str]:
 
 		return {
 			'Content-Length': '',
 			'Content-Type': 'text/plain',
-			'Host': host,
+			'Host': self.__pull_el.HOST,
 			'Connection': 'keep-alive',
 			'Cache-Control': 'max-age=0',
 			'Sec-Ch-Ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
@@ -64,6 +62,9 @@ class Step2Base:
 	def _set_no_city(self) -> None:
 		print('Continue (city)...')
 		self.__set_res(self.__pull_el.NO_CITY_CAT_ID)
+
+	def _request(self, url: str):
+		return requests.get(url, self.__get_headers(), timeout=5)
 
 	def _set_men(self) -> None:
 		print('Continue (sex)...')

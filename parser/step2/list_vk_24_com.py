@@ -29,7 +29,11 @@ class ListVk24Com(Step2Base):
 
 		vk_nick: str = self._get_vk_nick()
 
-		req = requests.get(f'https://{self.HOST}/vk/{vk_nick}/', self._get_headers())
+		try:
+			req = self._request(f'https://{self.HOST}/vk/{vk_nick}/')
+		except requests.exceptions.Timeout:
+			print('Timed out')
+			return
 
 		if req.status_code == 404:
 			self._set_continue()

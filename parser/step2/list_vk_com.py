@@ -27,9 +27,8 @@ class ListVkCom(Step2Base):
 		if not isinstance(vk_id, int):
 			return
 
-
 		try:
-			req = requests.get(f'https://{self.HOST}/{vk_id}/', self._get_headers(), timeout=5)
+			req = self._request(f'https://{self.HOST}/{vk_id}/')
 		except requests.exceptions.Timeout:
 			print('Timed out')
 			return
