@@ -27,7 +27,12 @@ class ListVkCom(Step2Base):
 		if not isinstance(vk_id, int):
 			return
 
-		req = requests.get(f'https://{self.HOST}/{vk_id}/', self._get_headers())
+
+		try:
+			req = requests.get(f'https://{self.HOST}/{vk_id}/', self._get_headers(), timeout=5)
+		except requests.exceptions.Timeout:
+			print('Timed out')
+			return
 
 		if req.status_code == 404:
 			self._set_continue()
@@ -35,6 +40,14 @@ class ListVkCom(Step2Base):
 
 		if req.status_code == 502:
 			print('Bad gateway 502...')
+			return
+
+		if req.status_code == 500:
+			print('Http status 500...')
+			return
+
+		if req.status_code == 524:
+			print('The origin web server timed out responding to this request. 524...')
 			return
 
 		if req.status_code != 200:

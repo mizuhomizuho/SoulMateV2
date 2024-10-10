@@ -86,7 +86,7 @@ class Step2Base:
 		if isinstance(vk_age, int):
 			self.__cur_item.age = vk_age
 			need_save_item = True
-			msg += f' AGE {vk_age} !!!'
+			msg += f' AGE {vk_age}!!!'
 		if need_save_item:
 			self.__cur_item.save()
 		print(Base.color(msg, 'OKGREEN'))

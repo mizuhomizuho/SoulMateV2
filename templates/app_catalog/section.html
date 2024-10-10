@@ -27,6 +27,7 @@
                     <table border="1">
                         {% for item in pager %}
                             <tr>
+                                <td>{{ item.pk }}</td>
                                 <td>
                                     <a href="https://vk.com/{{ item.nick }}/" target="_blank">
                                         <img src="{{ item.ava }}">

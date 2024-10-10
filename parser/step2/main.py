@@ -12,17 +12,23 @@ sys.path.append(f'{pathlib.Path().resolve()}/../../soul_mate')
 from parser.base import Base
 from list_vk_com import ListVkCom
 from list_vk_24_com import ListVk24Com
+from wennabe_com import WennabeCom
+from lib_li_vk_com import LibLiVkCom
+from info_people_com import InfoPeopleCom
+from vkstrana_ru import VkstranaRu
+from top100vk_com import Top100vkCom
 
 class Step2(Base):
 
 	last_starts: dict[str, float] = {}
 
-	__class_pull: list = [ListVkCom, ListVk24Com,]
+	__class_pull: list = [ListVkCom, ListVk24Com, WennabeCom, LibLiVkCom, InfoPeopleCom, VkstranaRu, Top100vkCom]
 
 	def init(self):
 
 		if len(sys.argv) >= 2 and sys.argv[1] == 'dev':
 			self.__class_pull = [ListVk24Com,]
+			# 246759
 
 		while True:
 

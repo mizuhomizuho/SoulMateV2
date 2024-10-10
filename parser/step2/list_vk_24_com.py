@@ -1,4 +1,3 @@
-import codecs
 from typing import Optional, TYPE_CHECKING
 import requests
 from bs4 import BeautifulSoup
@@ -44,14 +43,6 @@ class ListVk24Com(Step2Base):
 
 		html: str = req.text
 
-		# with codecs.open(f'tmp/{vk_id}.html', 'w', 'utf-8') as f:
-		# 	f.write(html)
-
-		# html: str = ''
-		# vk_id: int = 246759
-		# with codecs.open(f'tmp/{vk_id}.html', 'r', 'utf-8') as f:
-		# 	html = f.read()
-
 		soup = BeautifulSoup(html, 'html.parser')
 
 		def get_field_val(title: str, optional: bool = False) -> str:
@@ -63,7 +54,7 @@ class ListVk24Com(Step2Base):
 			assert el_parent is not None
 			el_val = el_parent.findChild('div', attrs={'class': 'field_data'})
 			assert el_val is not None
-			return el_val.contents[0]
+			return el_val.contents[0].strip()
 
 		vk_city1: str = get_field_val('Место проживания:', True)
 		vk_city2: str = get_field_val('Родной город:', True)
