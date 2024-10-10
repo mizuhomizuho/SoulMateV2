@@ -6,21 +6,25 @@ from parser.base import Base
 
 class Step2Base:
 
-	__CITY: str = 'Москва'
-	# __CITY: str = 'Хабаровск'
+	# __CITY: str = 'Москва'
+	__CITY: str = 'Хабаровск'
 
 	__FROM_CAT_ID: int = 7
 	__PARSED_CAT_ID: int = 9
 	__GOOD_CAT_ID: int = 13
 
-	__cur_pk: int
-	__s2_pull_el: Any
+	__cur_item: Elements
+	__pull_el: Any
 
-	def _get_headers(self) -> dict[str, str]:
+	def _get_headers(self, host: Optional[str] = None) -> dict[str, str]:
+
+		if host is None:
+			host = self.__pull_el.HOST
+
 		return {
 			'Content-Length': '',
 			'Content-Type': 'text/plain',
-			'Host': self.__s2_pull_el.HOST,
+			'Host': host,
 			'Connection': 'keep-alive',
 			'Cache-Control': 'max-age=0',
 			'Sec-Ch-Ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
@@ -42,46 +46,72 @@ class Step2Base:
 	def _get_city(self) -> str:
 		return self.__CITY
 
-	def __get_parsed_throughs(self) -> list:
-		return [
-			Elements.sections.through(elements_id=self.__cur_pk, sections_id=self.__PARSED_CAT_ID),
-			Elements.sections.through(elements_id=self.__cur_pk, sections_id=s2_pull_el.CAT_ID),
+	def __get_parsed_throughs(self, no_parsed: bool = False) -> list:
+		throughs = [
+			Elements.sections.through(elements_id=self.__cur_item.pk, sections_id=self.__pull_el.CAT_ID),
 		]
+		if not no_parsed:
+			throughs.append(
+				Elements.sections.through(elements_id=self.__cur_item.pk, sections_id=self.__PARSED_CAT_ID)
+			)
+		return throughs
+
+	def __set_res(self, sections_id: int, no_parsed: bool = False) -> None:
+		Elements.sections.through.objects.bulk_create(self.__get_parsed_throughs(no_parsed) + [
+			Elements.sections.through(elements_id=self.__cur_item.pk, sections_id=sections_id),
+		])
 
 	def _set_no_city(self) -> None:
-		return
-		Elements.sections.through.objects.bulk_create(self.__get_parsed_throughs() + [
-			Elements.sections.through(elements_id=self.__cur_pk, sections_id=s2_pull_el.NO_CITY_CAT_ID),
-		])
+		print('Continue (city)...')
+		self.__set_res(self.__pull_el.NO_CITY_CAT_ID)
 
 	def _set_men(self) -> None:
-		return
-		Elements.sections.through.objects.bulk_create(self.__get_parsed_throughs() + [
-			Elements.sections.through(elements_id=self.__cur_pk, sections_id=s2_pull_el.MAN_CAT_ID),
-		])
+		print('Continue (sex)...')
+		self.__set_res(self.__pull_el.MAN_CAT_ID)
+
+	def _set_continue(self) -> None:
+		print('Continue (404)...')
+		self.__set_res(self.__pull_el.CONTINUE_CAT_ID, True)
+
+	def _get_vk_nick(self) -> str:
+		return self.__cur_item.nick
 
 	def _set_good(self, vk_name: str, vk_age: Optional[int]) -> None:
-		pass
+		self.__set_res(self.__pull_el.__GOOD_CAT_ID)
+		msg: str = 'GOOD!!!'
+		need_save_item: bool = False
+		if self.__cur_item.name != vk_name:
+			self.__cur_item.name = vk_name
+			need_save_item = True
+		if isinstance(vk_age, int):
+			self.__cur_item.age = vk_age
+			need_save_item = True
+			msg += f' AGE {vk_age} !!!'
+		if need_save_item:
+			self.__cur_item.save()
+		print(Base.color(msg, 'OKGREEN'))
 
-	def _get_vk_id(self, s2_pull_el) -> Optional[int]:
+	def _get_vk_id(self, pull_el: Any) -> Optional[int]:
 
 		time_diff: float = 0
 		time_now: float = time.time()
-		if s2_pull_el.__class__.__name__ in s2_pull_el.parent.last_starts:
-			time_diff = time_now - s2_pull_el.parent.last_starts[s2_pull_el.__class__.__name__]
-		if time_diff and time_diff < 8.8:
+		if pull_el.__class__.__name__ in pull_el.parent.last_starts:
+			time_diff = time_now - pull_el.parent.last_starts[pull_el.__class__.__name__]
+		if time_diff and time_diff < 8.88:
 			return
-		s2_pull_el.parent.last_starts[s2_pull_el.__class__.__name__] = time_now
+		pull_el.parent.last_starts[pull_el.__class__.__name__] = time_now
 
-		self.__s2_pull_el = s2_pull_el
+		self.__pull_el = pull_el
 
 		# # self.__cur_pk = 346223029
 		# self.__cur_pk = 564598093
 		# return self.__cur_pk
 
-		db_item = Elements.objects.exclude(sections=self.__PARSED_CAT_ID
-										   ).filter(sections__parent=self.__FROM_CAT_ID).all()[0]
-		self.__cur_pk = db_item.pk
+		db_item = Elements.objects.exclude(
+			sections__in=(self.__PARSED_CAT_ID, pull_el.CONTINUE_CAT_ID)
+		).filter(sections__parent=self.__FROM_CAT_ID).all()[0]
+
+		self.__cur_item = db_item
 
 		print(Base.color(db_item.vk_id, 'OKBLUE'),
 			  Base.color(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'HEADER'))

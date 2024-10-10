@@ -17,13 +17,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from app_main.views import Views
+from debug_toolbar.toolbar import debug_toolbar_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', Views.index, name='frontpage'),
     path('clear-cache/', Views.clear_cache, name='clear_cache'),
     path('catalog/', include('app_catalog.urls')),
-]
+] + debug_toolbar_urls()
 
 handler404 = Views.page_not_found
 

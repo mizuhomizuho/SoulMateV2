@@ -112,6 +112,7 @@ class Elements(models.Model):
     id = models.AutoField(primary_key=True)
     sections = models.ManyToManyField(Sections, blank=True)
     name = models.CharField(max_length=255)
+    age = models.IntegerField(null=True, blank=True)
     nick = models.CharField(max_length=255, db_index=True, unique=True)
     vk_id = models.IntegerField(null=True, blank=True)
     ava = models.TextField()

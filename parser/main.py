@@ -15,9 +15,9 @@ class Step1(Base):
     # link_type: str = 'search_people_in_group'
     # to_cat_id: int = 1
 
-    url: str = 'https://vk.com/hbk_find'
-    group_id: int = 97945527
-    to_cat_id: int = 20
+    url: str = 'https://vk.com/modeli727'
+    group_id: int = 176407490
+    to_cat_id: int = 23
     link_type: str = 'in_group_v2'
 
     __chrome_user_data_dir: str = r'C:\Users\xxxx0\.chrome_3'

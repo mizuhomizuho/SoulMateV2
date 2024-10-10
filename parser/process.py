@@ -15,7 +15,7 @@ class Step1Process:
 
     def __end_signal(self) -> None:
 
-        ctypes.windll.user32.MessageBoxW(0, 'End', 'End', 0)
+        ctypes.windll.user32.MessageBoxW(0, 'End', 'End', 0x1000)
         self.__parent.stop_flag = True
 
     def __check_loaded(self) -> bool:

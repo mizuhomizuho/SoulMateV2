@@ -5,12 +5,40 @@
             <td>
                 {% include './inc/tree.html' %}
             </td>
-            {% if items %}
+            {% if pager %}
                 <td>
+
+                    {% if pager.paginator.num_pages > 1 %}
+                        {% if pager.has_previous %}
+                            <a href="?page={{ pager.previous_page_number }}">&lt;</a>
+                        {% endif %}
+                        {% for item in pager.paginator.page_range %}
+                            {% if pager.number == item %}
+                                <a href="?page={{ item }}" style="color: red">{{ item }}</a>
+                            {% elif item >= pager.number|add:-2 and item <= pager.number|add:2 %}
+                                <a href="?page={{ item }}">{{ item }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        {% if pager.has_next %}
+                            <a href="?page={{ pager.next_page_number }}">&gt;</a>
+                        {% endif %}
+                    {% endif %}
+
                     <table border="1">
                         {% for item in pager %}
                             <tr>
+                                <td>
+                                    <a href="https://vk.com/{{ item.nick }}/" target="_blank">
+                                        <img src="{{ item.ava }}">
+                                    </a>
+                                </td>
                                 <td>{{ item.name }}</td>
+                                <td>{{ item.age }}</td>
+                                <td>
+                                    {% for section in item.sections.all %}
+                                        <div>{{ section.name }}</div>
+                                    {% endfor %}
+                                </td>
                             </tr>
                         {% endfor %}
                     </table>
