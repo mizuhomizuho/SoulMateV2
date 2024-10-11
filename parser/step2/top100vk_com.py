@@ -53,10 +53,14 @@ class Top100vkCom(Step2Base):
 
 		box = soup.select('.card #timeline')
 
-		if not len(box) and req.status_code == 200:
-			h1_404 = soup.findAll('h1', string='404', attrs={'class': 'heading'})
-			if len(h1_404) == 1:
-				self._set_continue()
+		if not len(box):
+			if req.status_code == 200:
+				h1_404 = soup.findAll('h1', string='404', attrs={'class': 'heading'})
+				if len(h1_404) == 1:
+					self._set_continue()
+					return
+			elif req.status_code == 301:
+				print('301...')
 				return
 
 		assert len(box) == 1
