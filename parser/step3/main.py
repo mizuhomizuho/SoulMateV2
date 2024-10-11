@@ -22,7 +22,7 @@ class Step3(Base):
     __chrome_profile_directory: str = 'Default'
 
     __pull: dict[str, dict] = {}
-    __chrome_pull: tuple[str] = ('chrome_3', 'my_vk')
+    __chrome_pull: tuple[str] = ('chrome_3', 'chrome_my_vk')
 
     __STEP3_CAT_ID: int = 49
     __GOOD_CAT_ID: int = 50
@@ -34,9 +34,11 @@ class Step3(Base):
 
     def init(self) -> None:
 
-        while True:
-            for pull_key in self.__chrome_pull:
-                try:
+        try:
+
+            while True:
+
+                for pull_key in self.__chrome_pull:
 
                     self.__cur_chrome = pull_key
 
@@ -54,20 +56,22 @@ class Step3(Base):
 
                     self.__set_item()
                     url: str = f'https://vk.com/{self.__cur_item.nick}'
-                    url = 'https://www.showmyip.com/'
+                    # url = 'https://www.showmyip.com/'
                     print(Base.color(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'UNDERLINE'),
                         Base.color(pull_key, 'OKCYAN'),
                         Base.color(url, 'OKGREEN'))
                     self.__pull[pull_key]['drv'].get(url)
-                    # self.__parse(pull_key)
+                    self.__parse(pull_key)
 
-                except Exception as ex:
-                    self._print_common_exception(ex)
-                    subprocess.Popen('py -c "import ctypes\nctypes.windll'
-						 '.user32.MessageBoxW(0, \'Step3 err!\', \'Step3 err!\', 0x1000)"')
-                    break
+                time.sleep(1)
 
-            time.sleep(10)
+        except Exception as ex:
+            self._print_common_exception(ex)
+            subprocess.Popen('py -c "import ctypes\nctypes.windll'
+                 '.user32.MessageBoxW(0, \'Step3 err!\', \'Step3 err!\', 0x1000)"')
+        finally:
+            self.driver.close()
+            self.driver.quit()
 
     def __set_item(self) -> Elements:
 
@@ -109,7 +113,7 @@ class Step3(Base):
 
     def __get_drv(self, pull_key) -> WebDriver:
         options = webdriver.ChromeOptions()
-        # options.add_argument('--headless')
+        options.add_argument('--headless')
         if self.__cur_chrome in CFG['proxy']:
             self.__bild_proxy_ext()
             plugin_file = f'proxy_auth_plugin_{self.__cur_chrome}.zip'
