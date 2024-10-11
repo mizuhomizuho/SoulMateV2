@@ -63,6 +63,12 @@ class Top100vkCom(Step2Base):
 				print('301...')
 				return
 
+		if len(box) != 1:
+			print('status_code:', req.status_code)
+			print('BODY BEGIN:')
+			print(req.text)
+			print('BODY END.')
+
 		assert len(box) == 1
 
 		def get_field_val(title: str, optional: bool = False) -> str:
