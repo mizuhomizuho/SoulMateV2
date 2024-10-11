@@ -32,6 +32,9 @@ class VkstranaRu(Step2Base):
 		except requests.exceptions.Timeout:
 			print('Timed out')
 			return
+		except requests.exceptions.ConnectionError:
+			print('ConnectionError')
+			return
 
 		if req.status_code == 404:
 			self._set_continue()
