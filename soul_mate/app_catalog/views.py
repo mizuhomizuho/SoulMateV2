@@ -6,7 +6,6 @@ class Views:
 
     @staticmethod
     def index(request):
-        # return redirect('/', permanent=True)
         return render(request, 'app_catalog/index.html', {
             'tree': Sections.tree.get()['tree']
         })

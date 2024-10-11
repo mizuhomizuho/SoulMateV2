@@ -45,7 +45,7 @@ class Step2Base:
 		return self.__CITY
 
 	def __get_parsed_throughs(self, no_parsed: bool = False) -> list:
-		throughs = [
+		throughs: list = [
 			Elements.sections.through(elements_id=self.__cur_item.pk, sections_id=self.__pull_el.CAT_ID),
 		]
 		if not no_parsed:

@@ -2,5 +2,7 @@
 .idea
 **/__pycache__/
 soul_mate/db.sqlite3
+cfg.py
+parser/step3/proxy_auth_plugin_*.zip
 test.py
 test2.py
