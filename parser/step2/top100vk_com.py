@@ -52,6 +52,13 @@ class Top100vkCom(Step2Base):
 		soup = BeautifulSoup(html, 'html.parser')
 
 		box = soup.select('.card #timeline')
+
+		if not len(box) and req.status_code == 200:
+			h1_404 = soup.findAll('h1', string='404', attrs={'class': 'heading'})
+			if len(h1_404) == 1:
+				self._set_continue()
+				return
+
 		assert len(box) == 1
 
 		def get_field_val(title: str, optional: bool = False) -> str:
