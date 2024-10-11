@@ -26,7 +26,7 @@ class Step3(Base):
 
     __STEP3_CAT_ID: int = 49
     __GOOD_CAT_ID: int = 50
-    __LOCK_CAT_ID: int = 51
+    __BAD_CAT_ID: int = 51
     __FROM_CAT_ID: int = 13
 
     __cur_item: Elements
@@ -56,12 +56,11 @@ class Step3(Base):
 
                     self.__set_item()
                     url: str = f'https://vk.com/{self.__cur_item.nick}'
-                    # url = 'https://www.showmyip.com/'
                     print(Base.color(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'UNDERLINE'),
                         Base.color(pull_key, 'OKCYAN'),
                         Base.color(url, 'OKGREEN'))
                     self.__pull[pull_key]['drv'].get(url)
-                    self.__parse(pull_key)
+                    self.__parse()
 
                 time.sleep(1)
 
@@ -70,16 +69,20 @@ class Step3(Base):
             subprocess.Popen('py -c "import ctypes\nctypes.windll'
                  '.user32.MessageBoxW(0, \'Step3 err!\', \'Step3 err!\', 0x1000)"')
         finally:
-            self.driver.close()
-            self.driver.quit()
+            for pull_key in self.__chrome_pull:
+                if pull_key in self.__pull and 'drv' in self.__pull[pull_key]:
+                    self.__pull[pull_key]['drv'].close()
+                    self.__pull[pull_key]['drv'].quit()
 
     def __set_item(self) -> Elements:
 
         self.__cur_item = Elements.objects.exclude(
-            sections__in=(self.__GOOD_CAT_ID, self.__LOCK_CAT_ID)
+            sections__in=(self.__GOOD_CAT_ID, self.__BAD_CAT_ID)
         ).filter(sections=self.__FROM_CAT_ID).all()[0]
 
-    def __parse(self, pull_key) -> None:
+    def __parse(self) -> None:
+
+        pull_key: str = self.__cur_chrome
 
         is_no_lock = True
         try:
@@ -99,33 +102,63 @@ class Step3(Base):
             raise Exception('Error type 1')
 
         if not is_no_lock and not is_lock:
-            raise Exception('Error type 2')
+            if self.__pull[pull_key]['drv'].title == 'Такой страницы нет':
+                print('404...')
+                self.__set_res(True)
+                return
+            else:
+                try:
+                    text = 'К сожалению, нам пришлось заблокировать страницу'
+                    self.__pull[pull_key]['drv'].find_element(
+                        By.CSS_SELECTOR, '.PlaceholderMessageBlock__in').find_element(
+                        By.XPATH, f"//div[starts-with(text(),'{text}')]")
+                    print('Blocked...')
+                    self.__set_res(True)
+                    return
+                except NoSuchElementException:
+                    raise Exception('Error type 2')
 
         self.__set_res(is_lock)
 
-    def __set_res(self, is_lock: bool):
-        to_cat_id: int = self.__LOCK_CAT_ID if is_lock else self.__GOOD_CAT_ID
+    def __set_res(self, is_bad: bool):
+        to_cat_id: int = self.__BAD_CAT_ID if is_bad else self.__GOOD_CAT_ID
         self.__cur_item.sections.add(to_cat_id)
         if self.__GOOD_CAT_ID == to_cat_id:
             print(Base.color('GOOD!!!', 'WARNING'))
         else:
-            print(Base.color('FAIL...', 'FAIL'))
+            print(Base.color('Bad...', 'FAIL'))
 
     def __get_drv(self, pull_key) -> WebDriver:
+
         options = webdriver.ChromeOptions()
+
         options.add_argument('--headless')
-        if self.__cur_chrome in CFG['proxy']:
-            self.__bild_proxy_ext()
-            plugin_file = f'proxy_auth_plugin_{self.__cur_chrome}.zip'
-            options.add_extension(plugin_file)
-        else:
-            options.add_argument('--disable-extensions')
         # https://intoli.com/blog/not-possible-to-block-chrome-headless/chrome-headless-test.html
         options.add_argument('--disable-blink-features=AutomationControlled')
         options.add_argument(f'--user-data-dir={self.__chrome_user_data_dir_prefix}{pull_key}')
         options.add_argument(f'--profile-directory={self.__chrome_profile_directory}')
-        drv: WebDriver = webdriver.Chrome(options=options)
+
+        if self.__cur_chrome in CFG['proxy']:
+            self.__bild_proxy_ext()
+            plugin_file = f'proxy_auth_plugin_{self.__cur_chrome}.zip'
+            options.add_extension(plugin_file)
+
+        params: dict = {'options': options}
+
+        # if self.__cur_chrome in CFG['proxy']:
+        #     params['seleniumwire_options'] = {'proxy': {
+        #         'https': 'https://%s:%s@%s:%s' % (
+        #             CFG['proxy'][self.__cur_chrome]['user'],
+        #             CFG['proxy'][self.__cur_chrome]['pass'],
+        #             CFG['proxy'][self.__cur_chrome]['host'],
+        #             CFG['proxy'][self.__cur_chrome]['port'],
+        #         )
+        #     }}
+
+        drv: WebDriver = webdriver.Chrome(**params)
+
         drv.maximize_window()
+
         return drv
 
     def __bild_proxy_ext(self):
