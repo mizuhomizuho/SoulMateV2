@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from .models import Sections, Elements
 
@@ -6,6 +6,7 @@ class Views:
 
     @staticmethod
     def index(request):
+        # return redirect('/', permanent=True)
         return render(request, 'app_catalog/index.html', {
             'tree': Sections.tree.get()['tree']
         })

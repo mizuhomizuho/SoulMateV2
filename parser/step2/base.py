@@ -70,8 +70,8 @@ class Step2Base:
 		print('Continue (sex)...')
 		self.__set_res(self.__pull_el.MAN_CAT_ID)
 
-	def _set_continue(self) -> None:
-		print('Continue (404)...')
+	def _set_continue(self, msg: str = 'Continue (404)...') -> None:
+		print(msg)
 		self.__set_res(self.__pull_el.CONTINUE_CAT_ID, True)
 
 	def _get_vk_nick(self) -> str:
