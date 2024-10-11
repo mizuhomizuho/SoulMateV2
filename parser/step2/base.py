@@ -64,7 +64,7 @@ class Step2Base:
 		self.__set_res(self.__pull_el.NO_CITY_CAT_ID)
 
 	def _request(self, url: str):
-		return requests.get(url, self.__get_headers(), timeout=5)
+		return requests.get(url, self.__get_headers(), timeout=8)
 
 	def _set_men(self) -> None:
 		print('Continue (sex)...')

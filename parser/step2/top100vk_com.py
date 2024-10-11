@@ -37,6 +37,10 @@ class Top100vkCom(Step2Base):
 			self._set_continue()
 			return
 
+		if req.status_code == 502:
+			print('Bad gateway 502...')
+			return
+
 		if req.status_code != 200:
 			print('BODY BEGIN:')
 			print(req.text)

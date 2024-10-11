@@ -39,6 +39,10 @@ class ListVk24Com(Step2Base):
 			self._set_continue()
 			return
 
+		if req.status_code == 500:
+			print('Http status 500...')
+			return
+
 		if req.status_code != 200:
 			print('BODY BEGIN:')
 			print(req.text)
