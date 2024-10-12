@@ -14,7 +14,7 @@ class Views:
     def section(request, section_code, section_path=None):
         section_el = get_object_or_404(Sections, code=section_code)
         pager = Paginator(
-            Elements.objects.filter(sections=section_el).prefetch_related('sections'), 8
+            Elements.objects.filter(sections=section_el).prefetch_related('sections'), 18
         ).get_page(request.GET.get('page'))
         return render(request, 'app_catalog/section.html', context={
             'tree': Sections.tree.get()['tree'],

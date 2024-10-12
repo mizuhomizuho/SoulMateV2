@@ -1,67 +1,74 @@
 {% extends 'base.html' %}
 {% block content %}
-    <table border="1">
-        <tr>
-            <td>
-                {% include './inc/tree.html' %}
-            </td>
-            {% if pager %}
-                <td>
 
-                    {% if pager.paginator.num_pages > 1 %}
-                        {% if pager.has_previous %}
-                            <a href="?page={{ pager.previous_page_number }}">&lt;</a>
-                        {% endif %}
-                        {% for item in pager.paginator.page_range %}
-                            {% if pager.number == item %}
-                                <a href="?page={{ item }}" style="color: red">{{ item }}</a>
-                            {% elif item >= pager.number|add:-2 and item <= pager.number|add:2 %}
-                                <a href="?page={{ item }}">{{ item }}</a>
-                            {% endif %}
-                        {% endfor %}
-                        {% if pager.has_next %}
-                            <a href="?page={{ pager.next_page_number }}">&gt;</a>
-                        {% endif %}
-                    {% endif %}
+    {% if pager %}
 
-                    <table border="1">
-                        {% for item in pager %}
-                            <tr>
-                                <td>{{ item.pk }}</td>
-                                <td>
-                                    <a href="https://vk.com/{{ item.nick }}/" target="_blank">
-                                        <img src="{{ item.ava }}">
-                                    </a>
-                                </td>
-                                <td>{{ item.name }}</td>
-                                <td>{{ item.age }}</td>
-                                <td>
-                                    {% for section in item.sections.all %}
-                                        <div>{{ section.name }}</div>
-                                    {% endfor %}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </table>
-                
-                    {% if pager.paginator.num_pages > 1 %}
-                        {% if pager.has_previous %}
-                            <a href="?page={{ pager.previous_page_number }}">&lt;</a>
-                        {% endif %}
-                        {% for item in pager.paginator.page_range %}
-                            {% if pager.number == item %}
-                                <a href="?page={{ item }}" style="color: red">{{ item }}</a>
-                            {% elif item >= pager.number|add:-2 and item <= pager.number|add:2 %}
-                                <a href="?page={{ item }}">{{ item }}</a>
-                            {% endif %}
-                        {% endfor %}
-                        {% if pager.has_next %}
-                            <a href="?page={{ pager.next_page_number }}">&gt;</a>
-                        {% endif %}
+        <div class="nav">
+            {% if pager.paginator.num_pages > 1 %}
+                {% if pager.has_previous %}
+                    <a href="?page={{ pager.previous_page_number }}">&lt;</a>
+                {% endif %}
+                {% for item in pager.paginator.page_range %}
+                    {% if pager.number == item %}
+                        <a href="?page={{ item }}" style="color: red">{{ item }}</a>
+                    {% elif item >= pager.number|add:-2 and item <= pager.number|add:2 %}
+                        <a href="?page={{ item }}">{{ item }}</a>
                     {% endif %}
-                
-                </td>
+                {% endfor %}
+                {% if pager.has_next %}
+                    <a href="?page={{ pager.next_page_number }}">&gt;</a>
+                {% endif %}
             {% endif %}
-        </tr>
-    </table>
+        </div>
+
+        <div style="display: flex;flex-wrap: wrap;gap: 25px;">
+            {% for item in pager %}
+                <table>
+                    <tr>
+                        <td rowspan="3">
+                            <a href="https://vk.com/{{ item.nick }}/" target="_blank">
+                                <img src="{{ item.ava }}" style="position: relative;top: 2px;">
+                            </a>
+                        </td>
+                        <td colspan="2">
+                            <input type="button" value="Да" style="width: 100%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {{ item.age }}
+                        </td>
+                        <td>
+                            <input type="button" value="Нет" style="width: 100%">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <input type="button" value="Наверное">
+                        </td>
+                    </tr>
+                </table>
+            {% endfor %}
+        </div>
+
+        <div class="nav">
+            {% if pager.paginator.num_pages > 1 %}
+                {% if pager.has_previous %}
+                    <a href="?page={{ pager.previous_page_number }}">&lt;</a>
+                {% endif %}
+                {% for item in pager.paginator.page_range %}
+                    {% if pager.number == item %}
+                        <a href="?page={{ item }}" style="color: red">{{ item }}</a>
+                    {% elif item >= pager.number|add:-2 and item <= pager.number|add:2 %}
+                        <a href="?page={{ item }}">{{ item }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% if pager.has_next %}
+                    <a href="?page={{ pager.next_page_number }}">&gt;</a>
+                {% endif %}
+            {% endif %}
+        </div>
+
+    {% endif %}
+
 {% endblock %}

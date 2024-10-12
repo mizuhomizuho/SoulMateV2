@@ -117,11 +117,12 @@ class Step3(Base):
             no_lock_el = 'no_lock_el2'
             try: no_lock_el = get_no_lock_el()
             except NoSuchElementException: pass
-            print('no_lock_el2:', no_lock_el)
 
             lock_el = 'lock_el2'
             try: lock_el = get_lock_el()
             except NoSuchElementException: pass
+
+            print('no_lock_el2:', no_lock_el)
             print('lock_el2:', lock_el)
 
             raise Exception('Error type 1')
