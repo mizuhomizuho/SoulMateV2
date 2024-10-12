@@ -1,4 +1,6 @@
 import time
+from typing import Any
+
 from selenium import webdriver
 from selenium.webdriver.chrome.webdriver import WebDriver
 import sys
@@ -22,7 +24,7 @@ class Step3(Base):
     __chrome_profile_directory: str = 'Default'
 
     __pull: dict[str, dict] = {}
-    __chrome_pull: tuple[str] = ('chrome_3', 'chrome_my_vk')
+    __chrome_pull: tuple[str] = ('chrome_3', 'chrome_my_vk', 'chrome_megafon_6114')
 
     __STEP3_CAT_ID: int = 49
     __GOOD_CAT_ID: int = 50
@@ -56,6 +58,7 @@ class Step3(Base):
 
                     self.__set_item()
                     url: str = f'https://vk.com/{self.__cur_item.nick}'
+                    # url: str = 'https://2ip.ru/'
                     print(Base.color(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'UNDERLINE'),
                         Base.color(pull_key, 'OKCYAN'),
                         Base.color(url, 'OKGREEN'))
@@ -84,21 +87,43 @@ class Step3(Base):
 
         pull_key: str = self.__cur_chrome
 
-        is_no_lock = True
-        try:
-            self.__pull[pull_key]['drv'].find_element(
+        def get_no_lock_el():
+            return self.__pull[pull_key]['drv'].find_element(
                 By.CSS_SELECTOR, '#wall_tabs > ul > li > a > span.ui_tab_content_new')
+
+        def get_lock_el():
+            return self.__pull[pull_key]['drv'].find_element(
+                By.XPATH, "//h3[text()='Это закрытый профиль']")
+
+        no_lock_el: Any = 'no_lock_el'
+        is_no_lock: bool = True
+        try:
+            no_lock_el = get_no_lock_el()
         except NoSuchElementException:
             is_no_lock = False
 
-        is_lock = True
+        lock_el: Any = 'lock_el'
+        is_lock: bool = True
         try:
-            self.__pull[pull_key]['drv'].find_element(
-                By.XPATH, "//h3[text()='Это закрытый профиль']")
+            lock_el = get_lock_el()
         except NoSuchElementException:
             is_lock = False
 
         if is_no_lock and is_lock:
+
+            print('no_lock_el:', no_lock_el)
+            print('lock_el:', lock_el)
+
+            no_lock_el = 'no_lock_el2'
+            try: no_lock_el = get_no_lock_el()
+            except NoSuchElementException: pass
+            print('no_lock_el2:', no_lock_el)
+
+            lock_el = 'lock_el2'
+            try: lock_el = get_lock_el()
+            except NoSuchElementException: pass
+            print('lock_el2:', lock_el)
+
             raise Exception('Error type 1')
 
         if not is_no_lock and not is_lock:

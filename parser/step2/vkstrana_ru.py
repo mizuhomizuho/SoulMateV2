@@ -59,6 +59,13 @@ class VkstranaRu(Step2Base):
 		soup = BeautifulSoup(html, 'html.parser')
 
 		box = soup.select('#page_contents .content_user.blok_content .information_about_me')
+
+		if len(box) != 1:
+			print('status_code:', req.status_code)
+			print('BODY BEGIN:')
+			print(req.text)
+			print('BODY END.')
+
 		assert len(box) == 1
 
 		def get_field_val(title: str, optional: bool = False) -> str:
