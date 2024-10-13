@@ -1,10 +1,8 @@
 import time
-
 import selenium
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium import webdriver
 import sys
-from typing import Any
 import zipfile
 from datetime import datetime
 from selenium.webdriver.common.by import By
@@ -68,6 +66,9 @@ class Step3Process(Base):
             self.__drv
         except AttributeError:
             self.__init_drv()
+
+        if len(sys.argv) >= 3 and sys.argv[2] == 'dev':
+            exit()
 
         self.__set_item()
 

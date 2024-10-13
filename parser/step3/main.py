@@ -19,6 +19,7 @@ class Step3(Base):
         {'proc': 'step3', 'el': 'chrome_mts_6192'},
         {'proc': 'step3', 'el': 'chrome_mts_6227'},
         {'proc': 'step3', 'el': 'chrome_mts_6209'},
+        {'proc': 'step3', 'el': 'chrome_mts_6217'},
 
         {'proc': 'step2', 'el': 'ListVkCom'},
         {'proc': 'step2', 'el': 'ListVk24Com'},
@@ -32,12 +33,6 @@ class Step3(Base):
     __process_pull: dict[str] = {}
 
     def init(self) -> None:
-
-        # if len(sys.argv) >= 2 and sys.argv[1] == 'dev':
-        #     self.__PULL = (
-        #         {'proc': 'step2', 'el': 'ListVkCom'},
-        #         # {'proc': 'step2', 'el': 'ListVk24Com'},
-        #     )
 
         while True:
 

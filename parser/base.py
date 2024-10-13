@@ -102,9 +102,9 @@ class Base:
                 if str(e) != f'UNIQUE constraint failed: app_main_{freezing_model.__name__.lower()}.elements_id':
                     raise
 
-            except django.db.utils.OperationalError as e:
-
-                if str(e) != 'database is locked':
-                    raise
+            # except django.db.utils.OperationalError as e:
+            #
+            #     if str(e) != 'database is locked':
+            #         raise
 
             time.sleep(1)
