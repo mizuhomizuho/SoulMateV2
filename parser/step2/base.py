@@ -1,13 +1,12 @@
 from typing import Any, Optional
-import time
 from datetime import datetime
 import requests
 from app_catalog.models import Elements
+from app_main.models import Step2FreezingElements
 from parser.base import Base
 
-class Step2Base:
+class Step2Base(Base):
 
-	# __CITY: str = 'Москва'
 	__CITY: str = 'Хабаровск'
 
 	__FROM_CAT_ID: int = 7
@@ -58,6 +57,7 @@ class Step2Base:
 		Elements.sections.through.objects.bulk_create(self.__get_parsed_throughs(no_parsed) + [
 			Elements.sections.through(elements_id=self.__cur_item.pk, sections_id=sections_id),
 		])
+		Step2FreezingElements.objects.filter(pk=self.__cur_item.pk).delete()
 
 	def _set_no_city(self) -> None:
 		print('Continue (city)...')
@@ -92,25 +92,20 @@ class Step2Base:
 			self.__cur_item.save()
 		print(Base.color(msg, 'OKGREEN'))
 
-	def _get_vk_id(self, pull_el: Any) -> Optional[int]:
-
-		time_diff: float = 0
-		time_now: float = time.time()
-		if pull_el.__class__.__name__ in pull_el.parent.last_starts:
-			time_diff = time_now - pull_el.parent.last_starts[pull_el.__class__.__name__]
-		if time_diff and time_diff < 8.88:
-			return
-		pull_el.parent.last_starts[pull_el.__class__.__name__] = time_now
+	def _get_vk_id(self, pull_el: Any) -> int:
 
 		self.__pull_el = pull_el
 
-		# # self.__cur_pk = 346223029
-		# self.__cur_pk = 564598093
-		# return self.__cur_pk
+		# db_item = Elements.objects.exclude(
+		# 	sections__in=(self.__PARSED_CAT_ID, pull_el.CONTINUE_CAT_ID)
+		# ).filter(sections__parent=self.__FROM_CAT_ID).all()[0]
 
-		db_item = Elements.objects.exclude(
-			sections__in=(self.__PARSED_CAT_ID, pull_el.CONTINUE_CAT_ID)
-		).filter(sections__parent=self.__FROM_CAT_ID).all()[0]
+		db_item = self._get_item(
+			Step2FreezingElements,
+			pull_el.__class__.__name__,
+			{'sections__in': (self.__PARSED_CAT_ID, pull_el.CONTINUE_CAT_ID)},
+			{'sections__parent': self.__FROM_CAT_ID},
+		)
 
 		self.__cur_item = db_item
 

@@ -1,11 +1,8 @@
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 import requests
 from bs4 import BeautifulSoup
-from base import Step2Base
 from datetime import datetime
-
-if TYPE_CHECKING:
-	from parser.step2.main import Step2
+from parser.step2.base import Step2Base
 
 class ListVk24Com(Step2Base):
 
@@ -16,16 +13,9 @@ class ListVk24Com(Step2Base):
 	MAN_CAT_ID: int = 27
 	CONTINUE_CAT_ID: int = 28
 
-	parent: 'Step2'
-
-	def __init__(self, parent: 'Step2'):
-		self.parent = parent
-
 	def init(self) -> None:
 
-		vk_id: Optional[int] = self._get_vk_id(self)
-		if not isinstance(vk_id, int):
-			return
+		vk_id: int = self._get_vk_id(self)
 
 		vk_nick: str = self._get_vk_nick()
 
