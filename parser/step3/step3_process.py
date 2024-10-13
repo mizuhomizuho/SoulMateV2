@@ -116,7 +116,6 @@ class Step3Process(Base):
             is_lock = False
 
         if is_no_lock and is_lock:
-
             print('HTML begin:')
             print(self.__drv.find_element(By.CSS_SELECTOR, 'html').get_attribute('innerHTML'))
             print('HTML end.')
@@ -166,9 +165,28 @@ class Step3Process(Base):
                 pass
 
             try:
+                box = self.__drv.find_element(
+                    By.CSS_SELECTOR, '#profile_redesigned .PlaceholderMessageBlock__in')
+                box.find_element(
+                    By.XPATH, f"//div[contains(text(),'Мы обнаружили на')]")
+                box.find_element(
+                    By.XPATH, f"//div[contains(text(),'подозрительную активность и')]")
+                box.find_element(
+                    By.XPATH, f"//div[contains(text(),'временно заморозили её, чтобы вырвать из')]")
+                print('Blocked (v2)...')
+                self.__set_res(True)
+                return
+            except NoSuchElementException:
+                pass
+
+            try:
                 el = self.__drv.find_element(By.CSS_SELECTOR, '#react_rootprofile.ProfileWrapper__root')
                 if el.get_attribute('innerHTML') != '':
-                    raise Exception('Error type 3')
+                    print('innerHTML:', el.get_attribute('innerHTML'))
+                    print('HTML begin:')
+                    print(self.__drv.find_element(By.CSS_SELECTOR, 'html').get_attribute('innerHTML'))
+                    print('HTML end.')
+                    raise Exception('Error type 3.1')
                 print('JS err...')
                 return
             except NoSuchElementException:

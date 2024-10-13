@@ -94,12 +94,17 @@ class Base:
             try:
 
                 freezing_model.objects.create(elements_id=item.pk, process_code=process_code)
-                print('Freezing:', item.pk, process_code)
+                # print('Freezing:', item.pk, process_code)
                 return item
 
             except django.db.utils.IntegrityError as e:
 
                 if str(e) != f'UNIQUE constraint failed: app_main_{freezing_model.__name__.lower()}.elements_id':
+                    raise
+
+            except django.db.utils.OperationalError as e:
+
+                if str(e) != 'database is locked':
                     raise
 
             time.sleep(1)
