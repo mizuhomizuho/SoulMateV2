@@ -94,7 +94,7 @@ class Base:
             try:
 
                 freezing_model.objects.create(elements_id=item.pk, process_code=process_code)
-                print('freezing:', item.pk, process_code)
+                print('Freezing:', item.pk, process_code)
                 return item
 
             except django.db.utils.IntegrityError as e:
