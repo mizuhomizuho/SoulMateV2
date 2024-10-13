@@ -84,7 +84,14 @@ class Step3Process(Base):
             self.__init_drv()
             self.__drv.get(url)
 
-        self.__parse()
+        try:
+            self.__parse()
+        except selenium.common.exceptions.TimeoutException as e:
+            if str(e) != 'Message: timeout: Timed out receiving message from renderer: 300.000':
+                raise
+            print('TimeoutException (renderer). Reload...')
+            self.__drv.get(url)
+            self.__parse()
 
     def __kill_drv(self) -> None:
 
