@@ -79,9 +79,9 @@ class Step3Process(Base):
         try:
             self.__drv.get(url)
         except selenium.common.exceptions.TimeoutException:
-            print('TimeoutException. Reboot...')
-            self.__kill_drv()
-            self.__init_drv()
+            print('TimeoutException. Reload...')
+            # self.__kill_drv()
+            # self.__init_drv()
             self.__drv.get(url)
 
         try:
@@ -123,100 +123,67 @@ class Step3Process(Base):
         except NoSuchElementException:
             is_lock = False
 
-        def check_more() -> dict:
-
-            print('no_lock_el:', no_lock_el)
-            print('lock_el:', lock_el)
-
-            no_lock_el2 = 'no_lock_el2'
-            try:
-                no_lock_el2 = get_no_lock_el()
-            except NoSuchElementException:
-                pass
-
-            lock_el2 = 'lock_el2'
-            try:
-                lock_el2 = get_lock_el()
-            except NoSuchElementException:
-                pass
-
-            print('no_lock_el2:', no_lock_el2)
-            print('lock_el2:', lock_el2)
-
-            # time.sleep(2)
-            #
-            # no_lock_el3 = 'no_lock_el3'
-            # is_no_lock3: bool = True
-            # try:
-            #     no_lock_el3 = get_no_lock_el()
-            # except NoSuchElementException:
-            #     is_no_lock3 = False
-            #
-            # lock_el3 = 'lock_el3'
-            # is_lock3: bool = True
-            # try:
-            #     lock_el3 = get_lock_el()
-            # except NoSuchElementException:
-            #     is_lock3 = False
-            #
-            # print('no_lock_el3:', no_lock_el3)
-            # print('lock_el3:', lock_el3)
-            #
-            # return {'is_no_lock3': is_no_lock3, 'is_lock3': is_lock3}
-
         if is_no_lock and is_lock:
-            check_more()
+
+            print('HTML begin:')
+            print(self.__drv.find_element(By.CSS_SELECTOR, 'html').get_attribute('innerHTML'))
+            print('HTML end.')
             raise Exception('Error type 1')
 
         if not is_no_lock and not is_lock:
+
             if self.__drv.title == 'Такой страницы нет':
                 print('404...')
                 self.__set_res(True)
                 return
-            else:
-                try:
-                    self.__drv.find_element(
-                        By.CSS_SELECTOR, '.PlaceholderMessageBlock__in')
-                    text = 'К сожалению, нам пришлось заблокировать страницу'
-                    self.__drv.find_element(
-                        By.XPATH, f"//div[starts-with(text(),'{text}')]")
-                    print('Blocked...')
-                    self.__set_res(True)
-                    return
-                except NoSuchElementException:
-                    try:
-                        self.__drv.find_element(
-                            By.CSS_SELECTOR, '.PlaceholderMessageBlock__in')
-                        text = 'Страница удалена её владельцем.'
-                        self.__drv.find_element(
-                            By.XPATH, f"//div[text()='{text}']")
-                        print('Deleted...')
-                        self.__set_res(True)
-                        return
-                    except NoSuchElementException:
-                        # check_more_res = check_more()
-                        # if not check_more_res['is_no_lock3'] and not check_more_res['is_lock3']:
-                        #     # print('Reboot...')
-                        #     # self.__kill_drv()
-                        #     # self.__init_drv()
-                        #     # subprocess.Popen(f'py -c "import ctypes'
-                        #     #      f'\nctypes.windll.user32.MessageBoxW(0, \'!is_no_lock && !is_lock3\', \'Err\', 0x1000)"')
-                        #     # return
-                        #     print(self.__drv.find_element(By.CSS_SELECTOR, 'html').get_attribute('innerHTML'))
-                        #     raise Exception('Error type 2.1')
-                        # else:
-                        #     raise Exception('Error type 2')
-                        try:
-                            text = 'Не удается получить доступ к сайту'
-                            self.__drv.find_element(
-                                By.XPATH, f"//span[text()='{text}']")
-                            text = 'Превышено время ожидания ответа от сайта'
-                            self.__drv.find_element(
-                                By.XPATH, f"//p[starts-with(text(),'{text}')]")
-                            print('Chrome err...')
-                            return
-                        except NoSuchElementException:
-                            raise Exception('Error type 2')
+
+            try:
+                self.__drv.find_element(
+                    By.CSS_SELECTOR, '.PlaceholderMessageBlock__in')
+                text = 'К сожалению, нам пришлось заблокировать страницу'
+                self.__drv.find_element(
+                    By.XPATH, f"//div[starts-with(text(),'{text}')]")
+                print('Blocked...')
+                self.__set_res(True)
+                return
+            except NoSuchElementException:
+                pass
+
+            try:
+                self.__drv.find_element(
+                    By.CSS_SELECTOR, '.PlaceholderMessageBlock__in')
+                text = 'Страница удалена её владельцем.'
+                self.__drv.find_element(
+                    By.XPATH, f"//div[text()='{text}']")
+                print('Deleted...')
+                self.__set_res(True)
+                return
+            except NoSuchElementException:
+                pass
+
+            try:
+                text = 'Не удается получить доступ к сайту'
+                self.__drv.find_element(
+                    By.XPATH, f"//span[text()='{text}']")
+                text = 'Превышено время ожидания ответа от сайта'
+                self.__drv.find_element(
+                    By.XPATH, f"//p[starts-with(text(),'{text}')]")
+                print('Chrome err...')
+                return
+            except NoSuchElementException:
+                pass
+
+            try:
+                el = self.__drv.find_element(By.CSS_SELECTOR, '#react_rootprofile.ProfileWrapper__root')
+                if el.get_attribute('innerHTML') != '':
+                    raise Exception('Error type 3')
+                print('JS err...')
+                return
+            except NoSuchElementException:
+                print('HTML begin:')
+                print(self.__drv.find_element(By.CSS_SELECTOR, 'html').get_attribute('innerHTML'))
+                print('HTML end.')
+                raise Exception('Error type 2')
 
         self.__set_res(is_lock)
 
@@ -320,7 +287,7 @@ class Step3Process(Base):
         # selenium.common.exceptions.SessionNotCreatedException
         self.__drv = webdriver.Chrome(**params)
 
-        # self.__drv.maximize_window()
+        self.__drv.maximize_window()
 
 if __name__ == '__main__':
 
