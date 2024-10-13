@@ -1,6 +1,7 @@
 from typing import Any, Optional
 from datetime import datetime
 import requests
+import django
 from app_catalog.models import Elements
 from app_main.models import Step2FreezingElements
 from parser.base import Base
@@ -54,10 +55,20 @@ class Step2Base(Base):
 		return throughs
 
 	def __set_res(self, sections_id: int, no_parsed: bool = False) -> None:
-		Elements.sections.through.objects.bulk_create(self.__get_parsed_throughs(no_parsed) + [
-			Elements.sections.through(elements_id=self.__cur_item.pk, sections_id=sections_id),
-		])
-		Step2FreezingElements.objects.filter(pk=self.__cur_item.pk).delete()
+		try:
+			Elements.sections.through.objects.bulk_create(self.__get_parsed_throughs(no_parsed) + [
+				Elements.sections.through(elements_id=self.__cur_item.pk, sections_id=sections_id),
+			])
+			Step2FreezingElements.objects.filter(pk=self.__cur_item.pk).delete()
+		except django.db.utils.IntegrityError:
+			print('IntegrityError begin')
+			print('self.__cur_item.pk', self.__cur_item.pk)
+			print('sections_id', sections_id)
+			print('no_parsed', no_parsed)
+			for item in self.__get_parsed_throughs(no_parsed):
+				print(item.elements_id, item.sections_id)
+			print('IntegrityError end')
+			raise
 
 	def _set_no_city(self) -> None:
 		print('Continue (city)...')

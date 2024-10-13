@@ -136,26 +136,26 @@ class Step3Process(Base):
             print('no_lock_el2:', no_lock_el2)
             print('lock_el2:', lock_el2)
 
-            time.sleep(2)
-
-            no_lock_el3 = 'no_lock_el3'
-            is_no_lock3: bool = True
-            try:
-                no_lock_el3 = get_no_lock_el()
-            except NoSuchElementException:
-                is_no_lock3 = False
-
-            lock_el3 = 'lock_el3'
-            is_lock3: bool = True
-            try:
-                lock_el3 = get_lock_el()
-            except NoSuchElementException:
-                is_lock3 = False
-
-            print('no_lock_el3:', no_lock_el3)
-            print('lock_el3:', lock_el3)
-
-            return {'is_no_lock3': is_no_lock3, 'is_lock3': is_lock3}
+            # time.sleep(2)
+            #
+            # no_lock_el3 = 'no_lock_el3'
+            # is_no_lock3: bool = True
+            # try:
+            #     no_lock_el3 = get_no_lock_el()
+            # except NoSuchElementException:
+            #     is_no_lock3 = False
+            #
+            # lock_el3 = 'lock_el3'
+            # is_lock3: bool = True
+            # try:
+            #     lock_el3 = get_lock_el()
+            # except NoSuchElementException:
+            #     is_lock3 = False
+            #
+            # print('no_lock_el3:', no_lock_el3)
+            # print('lock_el3:', lock_el3)
+            #
+            # return {'is_no_lock3': is_no_lock3, 'is_lock3': is_lock3}
 
         if is_no_lock and is_lock:
             check_more()
@@ -187,17 +187,28 @@ class Step3Process(Base):
                         self.__set_res(True)
                         return
                     except NoSuchElementException:
-                        check_more_res = check_more()
-                        if not check_more_res['is_no_lock3'] and not check_more_res['is_lock3']:
-                            # print('Reboot...')
-                            # self.__kill_drv()
-                            # self.__init_drv()
-                            # subprocess.Popen(f'py -c "import ctypes'
-                            #      f'\nctypes.windll.user32.MessageBoxW(0, \'!is_no_lock && !is_lock3\', \'Err\', 0x1000)"')
-                            # return
-                            print(self.__drv.find_element(By.CSS_SELECTOR, 'html').get_attribute('innerHTML'))
-                            raise Exception('Error type 2.1')
-                        else:
+                        # check_more_res = check_more()
+                        # if not check_more_res['is_no_lock3'] and not check_more_res['is_lock3']:
+                        #     # print('Reboot...')
+                        #     # self.__kill_drv()
+                        #     # self.__init_drv()
+                        #     # subprocess.Popen(f'py -c "import ctypes'
+                        #     #      f'\nctypes.windll.user32.MessageBoxW(0, \'!is_no_lock && !is_lock3\', \'Err\', 0x1000)"')
+                        #     # return
+                        #     print(self.__drv.find_element(By.CSS_SELECTOR, 'html').get_attribute('innerHTML'))
+                        #     raise Exception('Error type 2.1')
+                        # else:
+                        #     raise Exception('Error type 2')
+                        try:
+                            text = 'Не удается получить доступ к сайту'
+                            self.__drv.find_element(
+                                By.XPATH, f"//span[text()='{text}']")
+                            text = 'Превышено время ожидания ответа от сайта'
+                            self.__drv.find_element(
+                                By.XPATH, f"//p[starts-with(text(),'{text}')]")
+                            print('Chrome err...')
+                            return
+                        except NoSuchElementException:
                             raise Exception('Error type 2')
 
         self.__set_res(is_lock)
@@ -299,6 +310,7 @@ class Step3Process(Base):
 
         params: dict = {'options': options}
 
+        # selenium.common.exceptions.SessionNotCreatedException
         self.__drv = webdriver.Chrome(**params)
 
         # self.__drv.maximize_window()

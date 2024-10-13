@@ -1,3 +1,4 @@
+import time
 import traceback
 from typing import Union, Type
 from io import StringIO
@@ -58,8 +59,12 @@ class Base:
             step_name_color = self.color(f'{step_name}:', 'OKCYAN')
             step_out: str = f'{step_name_color} {f'\n{step_name_color} '.join(out.getvalue().strip().split('\n'))}'
             Pipe.objects.create(value=step_out)
+            p = pathlib.Path(__file__).parent.resolve()
+            common_log_file: str = f'{p}/log/common_{datetime.now().strftime('%Y-%m-%d')}.log'
+            with codecs.open(common_log_file, 'a', 'utf-8') as f:
+                f.write(step_out)
             if is_error:
-                log_file: str = f'{pathlib.Path(__file__).parent.resolve()}/log/{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{step_name}'
+                log_file: str = f'{p}/log/el_err_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{step_name}.log'
                 with codecs.open(log_file, 'w', 'utf-8') as f:
                     f.write(step_out)
 
@@ -89,9 +94,11 @@ class Base:
             try:
 
                 freezing_model.objects.create(elements_id=item.pk, process_code=process_code)
+                print('freezing:', item.pk, process_code)
                 return item
 
             except django.db.utils.IntegrityError as e:
 
+                time.sleep(1)
                 if str(e) != f'UNIQUE constraint failed: app_main_{freezing_model.__name__.lower()}.elements_id':
                     raise
