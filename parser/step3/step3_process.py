@@ -101,25 +101,17 @@ class Step3Process(Base):
 
     def __parse(self) -> None:
 
-        def get_no_lock_el():
-            return self.__drv.find_element(
-                By.CSS_SELECTOR, '#wall_tabs > ul > li > a > span.ui_tab_content_new')
-
-        def get_lock_el():
-            return self.__drv.find_element(
-                By.XPATH, "//h3[text()='Это закрытый профиль']")
-
-        no_lock_el: Any = 'no_lock_el'
         is_no_lock: bool = True
         try:
-            no_lock_el = get_no_lock_el()
+            self.__drv.find_element(
+                By.CSS_SELECTOR, '#wall_tabs > ul > li > a > span.ui_tab_content_new')
         except NoSuchElementException:
             is_no_lock = False
 
-        lock_el: Any = 'lock_el'
         is_lock: bool = True
         try:
-            lock_el = get_lock_el()
+            self.__drv.find_element(
+                By.XPATH, "//h3[text()='Это закрытый профиль']")
         except NoSuchElementException:
             is_lock = False
 
