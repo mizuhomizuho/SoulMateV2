@@ -99,6 +99,7 @@ class Base:
 
             except django.db.utils.IntegrityError as e:
 
-                time.sleep(1)
                 if str(e) != f'UNIQUE constraint failed: app_main_{freezing_model.__name__.lower()}.elements_id':
                     raise
+
+            time.sleep(1)
