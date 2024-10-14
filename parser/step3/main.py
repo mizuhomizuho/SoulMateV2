@@ -36,9 +36,9 @@ class Step3(Base):
 
     def init(self) -> None:
 
-        # Step2FreezingElements.objects.all().delete()
-        # Step3FreezingElements.objects.all().delete()
-        # Debug.objects.all().delete()
+        Step2FreezingElements.objects.all().delete()
+        Step3FreezingElements.objects.all().delete()
+        Debug.objects.all().delete()
 
         while True:
 

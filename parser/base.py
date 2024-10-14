@@ -71,6 +71,18 @@ class Base:
         conn.commit()
         conn.close()
 
+        # Debug.objects.create(time=time.time(), value=cls.print_to_string(vals))
+
+        # with codecs.open(cls.__DEBUG_FILE, 'a+', 'utf-8') as f:
+        #     json_str = json.dumps({
+        #         'time': time.time(),
+        #         'val': cls.print_to_string(vals)
+        #     })
+        #     f.seek(0)
+        #     if f.read() != '':
+        #         json_str = f'\n{json_str}'
+        #     f.write(json_str)
+
     @classmethod
     def convert_debug(cls) -> None:
 
@@ -82,6 +94,27 @@ class Base:
         res_sorted = dict(sorted(arr.items()))
         with codecs.open(cls.__DEBUG_FILE, 'w', 'utf-8') as f:
             f.write(json.dumps(res_sorted))
+
+        # with codecs.open(cls.__DEBUG_FILE, 'r', 'utf-8') as f:
+        #     arr: dict[float, list] = {}
+        #     for line in f:
+        #         print(line.rstrip())
+        #         el = json.loads(line.rstrip())
+        #         if el['time'] not in arr:
+        #             arr[el['time']] = []
+        #         arr[el['time']].append(el['val'])
+        #     res: dict[float, dict[str, int | list]] = {}
+        #     for key in arr:
+        #         res[key] = {
+        #             'len': len(arr[key]),
+        #             'val': arr[key],
+        #         }
+        #     output = io.StringIO()
+        #     pprint(dict(sorted(res.items())), stream=output)
+        #     contents = output.getvalue()
+        #     output.close()
+        #     with codecs.open(cls.__DEBUG_FILE_GOOD, 'w', 'utf-8') as f2:
+        #         f2.write(contents)
 
     @staticmethod
     def color(string: str, key: str) -> str:
@@ -132,23 +165,62 @@ class Base:
 
         while True:
 
+            # Base.debug('_get_item while start', process_code)
+            # Base.debug('sql_pretty1', process_code, Base.sql_pretty())
+
             freezing = freezing_model.objects.filter(process_code=process_code)
             if freezing:
                 return Elements.objects.get(pk=freezing[0].elements_id)
+
+            # Base.debug('sql_pretty2', process_code, Base.sql_pretty())
 
             item = Elements.objects.exclude(**exclude_params).exclude(
                 pk__in=freezing_model.objects.all()).filter(**filter_params).order_by('?').first()
 
             if not item:
-
                 print('The end!!!')
                 time.sleep(8)
+
+            # Base.debug('sql_pretty3', process_code, Base.sql_pretty())
+
+            # conn = pymysql.connect(
+            #     host='localhost',
+            #     user='soul_mate',
+            #     password='soul_mate',
+            #     database='soul_mate',
+            #     cursorclass=pymysql.cursors.DictCursor,)
+            # cursor = conn.cursor()
+            # cursor.execute(f"{item.query} LIMIT 1")
+            # Base.debug('---check item.query---', process_code, cursor.fetchall())
+            # conn.commit()
+            # conn.close()
+
+            # Base.debug('sql_pretty5', process_code, Base.sql_pretty())
+            #
+            # Base.debug('Free id', process_code, item.pk)
+
+            # conn = pymysql.connect(
+            #     host='localhost',
+            #     user='soul_mate',
+            #     password='soul_mate',
+            #     database='soul_mate',
+            #     cursorclass=pymysql.cursors.DictCursor,)
+            # cursor = conn.cursor()
+            # cursor.execute(f"SELECT * FROM app_catalog_elements_sections WHERE elements_id = {item.pk}")
+            # Base.debug('---check elements_sections---', process_code, item.pk, cursor.fetchall())
+            # conn.commit()
+            # conn.close()
 
             try:
 
                 freezing_model.objects.create(elements_id=item.pk, process_code=process_code)
+                # Base.debug('Freezing', process_code, item.pk)
                 return item
 
             except django.db.utils.IntegrityError:
 
                 pass
+
+            # Base.debug('No freezing, sleep', process_code, item.pk)
+
+        # time.sleep(1)
