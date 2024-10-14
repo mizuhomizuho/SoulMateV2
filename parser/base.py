@@ -132,62 +132,23 @@ class Base:
 
         while True:
 
-            # Base.debug('_get_item while start', process_code)
-            # Base.debug('sql_pretty1', process_code, Base.sql_pretty())
-
             freezing = freezing_model.objects.filter(process_code=process_code)
             if freezing:
                 return Elements.objects.get(pk=freezing[0].elements_id)
-
-            # Base.debug('sql_pretty2', process_code, Base.sql_pretty())
 
             item = Elements.objects.exclude(**exclude_params).exclude(
                 pk__in=freezing_model.objects.all()).filter(**filter_params).order_by('?').first()
 
             if not item:
+
                 print('The end!!!')
                 time.sleep(8)
-
-            # Base.debug('sql_pretty3', process_code, Base.sql_pretty())
-
-            # conn = pymysql.connect(
-            #     host='localhost',
-            #     user='soul_mate',
-            #     password='soul_mate',
-            #     database='soul_mate',
-            #     cursorclass=pymysql.cursors.DictCursor,)
-            # cursor = conn.cursor()
-            # cursor.execute(f"{item.query} LIMIT 1")
-            # Base.debug('---check item.query---', process_code, cursor.fetchall())
-            # conn.commit()
-            # conn.close()
-
-            # Base.debug('sql_pretty5', process_code, Base.sql_pretty())
-            #
-            # Base.debug('Free id', process_code, item.pk)
-
-            # conn = pymysql.connect(
-            #     host='localhost',
-            #     user='soul_mate',
-            #     password='soul_mate',
-            #     database='soul_mate',
-            #     cursorclass=pymysql.cursors.DictCursor,)
-            # cursor = conn.cursor()
-            # cursor.execute(f"SELECT * FROM app_catalog_elements_sections WHERE elements_id = {item.pk}")
-            # Base.debug('---check elements_sections---', process_code, item.pk, cursor.fetchall())
-            # conn.commit()
-            # conn.close()
 
             try:
 
                 freezing_model.objects.create(elements_id=item.pk, process_code=process_code)
-                # Base.debug('Freezing', process_code, item.pk)
                 return item
 
             except django.db.utils.IntegrityError:
 
                 pass
-
-            # Base.debug('No freezing, sleep', process_code, item.pk)
-
-        # time.sleep(1)

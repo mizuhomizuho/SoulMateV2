@@ -60,32 +60,11 @@ class Step2Base(Base):
 
 		try:
 
-			# Base.debug('__set_res start', self.__cur_item.pk, self.__pull_el.HOST)
-			#
-			# Base.debug('sql_pretty_1', self.__cur_item.pk, self.__pull_el.HOST, Base.sql_pretty())
-
 			Elements.sections.through.objects.bulk_create(self.__get_parsed_throughs(no_parsed) + [
 				Elements.sections.through(elements_id=self.__cur_item.pk, sections_id=sections_id),
 			])
 
-			# Base.debug('sql_pretty_2', self.__cur_item.pk, self.__pull_el.HOST, Base.sql_pretty())
-
 			Step2FreezingElements.objects.filter(pk=self.__cur_item.pk).delete()
-
-			# Base.debug('sql_pretty_3', self.__cur_item.pk, self.__pull_el.HOST, Base.sql_pretty())
-			#
-			# Base.debug('Freezing del', self.__cur_item.pk, self.__pull_el.HOST, {
-			# 	'sections_id': sections_id,
-			# 	'no_parsed': no_parsed,
-			# })
-			#
-			# i = 0
-			# for item in self.__get_parsed_throughs(no_parsed):
-			# 	Base.debug(f'Freezing del (more {i})', self.__cur_item.pk, self.__pull_el.HOST, {
-			# 		'__get_parsed_throughs.elements_id': item.elements_id,
-			# 		'__get_parsed_throughs.sections_id': item.sections_id,
-			# 	})
-			# 	i += 1
 
 		except django.db.utils.IntegrityError:
 			print('IntegrityError begin')
