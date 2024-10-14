@@ -7,7 +7,8 @@ sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
 
 from parser.base import Base
-from app_main.models import Pipe
+from app_main.models import Pipe, Step2FreezingElements, Step3FreezingElements, Debug
+
 
 class Step3(Base):
 
@@ -20,6 +21,7 @@ class Step3(Base):
         {'proc': 'step3', 'el': 'chrome_mts_6227'},
         {'proc': 'step3', 'el': 'chrome_mts_6209'},
         {'proc': 'step3', 'el': 'chrome_mts_6217'},
+        {'proc': 'step3', 'el': 'chrome_mts_6214'},
 
         {'proc': 'step2', 'el': 'ListVkCom'},
         {'proc': 'step2', 'el': 'ListVk24Com'},
@@ -33,6 +35,10 @@ class Step3(Base):
     __process_pull: dict[str] = {}
 
     def init(self) -> None:
+
+        # Step2FreezingElements.objects.all().delete()
+        # Step3FreezingElements.objects.all().delete()
+        # Debug.objects.all().delete()
 
         while True:
 

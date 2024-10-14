@@ -28,3 +28,9 @@ class Pipe(models.Model):
     id = models.AutoField(primary_key=True)
     value = models.TextField()
     time_created = models.DateTimeField(auto_now_add=True)
+
+class Debug(models.Model):
+
+    id = models.AutoField(primary_key=True)
+    time = models.FloatField()
+    value = models.TextField()
