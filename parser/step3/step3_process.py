@@ -1,5 +1,6 @@
 import time
 import selenium
+from django.db import transaction
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium import webdriver
 import sys
@@ -41,6 +42,8 @@ class Step3Process(Base):
 
         while True:
 
+            start_time: float  = time.time()
+
             with open(f'{pathlib.Path(__file__).parent.resolve()}/exec.py', 'r') as f:
                 exec(f.read())
             if Base.stop:
@@ -49,9 +52,15 @@ class Step3Process(Base):
 
             db.connections.close_all()
 
-            self._step(self.__run, self.__set_err, self.__cur_chrome)
+            with transaction.atomic():
+                self._step(self.__run, self.__set_err, self.__cur_chrome)
 
-            time.sleep(8.88)
+            db.connections.close_all()
+
+            print(f'{self.__cur_chrome}: Diff time {round(time.time() - start_time, 2)}')
+
+            if time.time() - start_time < 8:
+                time.sleep(time.time() - start_time)
 
     def __set_err(self) -> None:
 
@@ -192,13 +201,29 @@ class Step3Process(Base):
                 pass
 
             try:
+                box = self.__drv.find_element(
+                    By.CSS_SELECTOR, '#react_rootprofile.ProfileWrapper__root')
+                box.find_element(
+                    By.XPATH, f"//h2[contains(text(),'Заблокированный пользователь')]")
+                box.find_element(
+                    By.XPATH, f"//div[contains(text(),'Данный материал заблокирован на территории"
+                        f" Российской Федерации на основании требования Генеральной прокуратуры"
+                        f" Российской Федерации от')]")
+                print('Blocked (v3)...')
+                self.__set_res(True)
+                return
+            except NoSuchElementException:
+                pass
+
+            try:
                 el = self.__drv.find_element(By.CSS_SELECTOR, '#react_rootprofile.ProfileWrapper__root')
                 if el.get_attribute('innerHTML') != '':
+                    print('textContent:', el.get_attribute('textContent'))
                     print('innerHTML:', el.get_attribute('innerHTML'))
                     print('HTML begin:')
                     print(self.__drv.find_element(By.CSS_SELECTOR, 'html').get_attribute('innerHTML'))
                     print('HTML end.')
-                    raise Exception('Error type 3.1')
+                    raise Exception('Error type 3.3')
                 print('JS err...')
                 return
             except NoSuchElementException:

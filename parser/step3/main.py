@@ -2,7 +2,6 @@ import subprocess
 import pathlib
 import time
 import sys
-from datetime import datetime
 from django import db
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
@@ -20,8 +19,8 @@ class Step3(Base):
         # {'proc': 'step3', 'el': 'chrome_megafon_6114'},
         # {'proc': 'step3', 'el': 'chrome_mts_6192'},
         # {'proc': 'step3', 'el': 'chrome_mts_6227'},
-        {'proc': 'step3', 'el': 'chrome_mts_6209'},
-        # {'proc': 'step3', 'el': 'chrome_mts_6217'},
+        # {'proc': 'step3', 'el': 'chrome_mts_6209'},
+        {'proc': 'step3', 'el': 'chrome_mts_6217'},
         # {'proc': 'step3', 'el': 'chrome_mts_6214'},
 
         {'proc': 'step2', 'el': 'ListVkCom'},
@@ -45,15 +44,17 @@ class Step3(Base):
 
             for item in self.__PULL:
 
-                db.connections.close_all()
-
                 with open(f'{pathlib.Path(__file__).parent.resolve()}/exec.py', 'r') as f:
                     exec(f.read())
                 if Base.stop:
                     print(f'Stop {__file__}')
                     return
 
-                # print(Base.color(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'FAIL'))
+                start_time = time.time()
+
+                db.connections.close_all()
+                # for connection_name in db.connections.databases:
+                #     db.connections[connection_name].close()
 
                 pipe_ids: list[int] = []
                 pipe_all = Pipe.objects.all().order_by('-pk')
@@ -68,9 +69,19 @@ class Step3(Base):
 
                     args = (f'{pathlib.Path(__file__).parent.resolve()}/../../.venv/Scripts/python.exe',
                             f'{pathlib.Path(__file__).parent.resolve()}/{item['proc']}_process.py', item['el'])
-                    self.__process_pull[proc_key] = subprocess.Popen(args)
+                    self.__process_pull[proc_key] = {
+                        'proc': subprocess.Popen(args),
+                    }
 
-                time.sleep(1)
+                # elif item['proc'] == 'step2' and self.__process_pull[proc_key]['proc'].poll() is not None:
+                #
+                #     print(f'Del proc {proc_key}')
+                #     del self.__process_pull[proc_key]
+
+                db.connections.close_all()
+
+                if time.time() - start_time < 1:
+                    time.sleep(time.time() - start_time)
 
 if __name__ == '__main__':
 

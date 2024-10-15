@@ -1,3 +1,4 @@
+import time
 from typing import Any, Optional
 from datetime import datetime
 import requests
@@ -98,24 +99,34 @@ class Step2Base(Base):
 			raise
 
 	def _set_no_city(self) -> None:
+
 		print('Continue (city)...')
 		self.__set_res(self.__pull_el.NO_CITY_CAT_ID)
 
 	def _request(self, url: str):
-		return requests.get(url, self.__get_headers(), timeout=8)
+
+		start_time: float = time.time()
+		res = requests.get(url, self.__get_headers(), timeout=8)
+		print(f'{self.__pull_el.HOST}: Diff time (requests) {round(time.time() - start_time, 2)}')
+
+		return res
 
 	def _set_men(self) -> None:
+
 		print('Continue (sex)...')
 		self.__set_res(self.__pull_el.MAN_CAT_ID)
 
 	def _set_continue(self, msg: str = 'Continue (404)...') -> None:
+
 		print(msg)
 		self.__set_res(self.__pull_el.CONTINUE_CAT_ID, True)
 
 	def _get_vk_nick(self) -> str:
+
 		return self.__cur_item.nick
 
 	def _set_good(self, vk_name: str, vk_age: Optional[int]) -> None:
+
 		self.__set_res(self.__pull_el.__GOOD_CAT_ID)
 		msg: str = 'GOOD!!!'
 		need_save_item: bool = False

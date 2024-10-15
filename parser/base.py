@@ -7,7 +7,7 @@ import pathlib
 from datetime import datetime
 import codecs
 import sqlparse
-from django.db import connection
+from django import db
 import json
 import pymysql
 from pymysql.converters import escape_string
@@ -20,7 +20,6 @@ django.setup()
 
 from app_catalog.models import Elements
 from app_main.models import Step3FreezingElements, Step2FreezingElements, Pipe, Debug
-
 
 class Base:
 
@@ -51,7 +50,7 @@ class Base:
 
         out = ''
         i: int = 0
-        for item in connection.queries:
+        for item in db.connection.queries:
             if i not in cls.__returned_sql:
                 cls.__returned_sql.append(i)
                 out += ('\n\n' if out != '' else '') + sqlparse.format(
@@ -73,18 +72,6 @@ class Base:
         conn.commit()
         conn.close()
 
-        # Debug.objects.create(time=time.time(), value=cls.print_to_string(vals))
-
-        # with codecs.open(cls.__DEBUG_FILE, 'a+', 'utf-8') as f:
-        #     json_str = json.dumps({
-        #         'time': time.time(),
-        #         'val': cls.print_to_string(vals)
-        #     })
-        #     f.seek(0)
-        #     if f.read() != '':
-        #         json_str = f'\n{json_str}'
-        #     f.write(json_str)
-
     @classmethod
     def convert_debug(cls) -> None:
 
@@ -96,27 +83,6 @@ class Base:
         res_sorted = dict(sorted(arr.items()))
         with codecs.open(cls.__DEBUG_FILE, 'w', 'utf-8') as f:
             f.write(json.dumps(res_sorted))
-
-        # with codecs.open(cls.__DEBUG_FILE, 'r', 'utf-8') as f:
-        #     arr: dict[float, list] = {}
-        #     for line in f:
-        #         print(line.rstrip())
-        #         el = json.loads(line.rstrip())
-        #         if el['time'] not in arr:
-        #             arr[el['time']] = []
-        #         arr[el['time']].append(el['val'])
-        #     res: dict[float, dict[str, int | list]] = {}
-        #     for key in arr:
-        #         res[key] = {
-        #             'len': len(arr[key]),
-        #             'val': arr[key],
-        #         }
-        #     output = io.StringIO()
-        #     pprint(dict(sorted(res.items())), stream=output)
-        #     contents = output.getvalue()
-        #     output.close()
-        #     with codecs.open(cls.__DEBUG_FILE_GOOD, 'w', 'utf-8') as f2:
-        #         f2.write(contents)
 
     @staticmethod
     def color(string: str, key: str) -> str:
@@ -177,7 +143,26 @@ class Base:
             # Base.debug('sql_pretty2', process_code, Base.sql_pretty())
 
             item = Elements.objects.exclude(**exclude_params).exclude(
-                pk__in=freezing_model.objects.all()).filter(**filter_params).order_by('?').first()
+                pk__in=freezing_model.objects.all()).filter(**filter_params).only('id').order_by('?').first()
+
+            # item = Elements.objects.exclude(**exclude_params).exclude(
+            #     pk__in=freezing_model.objects.all()).filter(**filter_params).only('id').order_by('?')
+            # conn = pymysql.connect(
+            #     host='localhost',
+            #     user='soul_mate',
+            #     password='soul_mate',
+            #     database='soul_mate',
+            #     cursorclass=pymysql.cursors.DictCursor,)
+            # cursor = conn.cursor()
+            # cursor.execute(f"{item.query} LIMIT 1")
+            # # print(item.query)
+            # el = cursor.fetchall()
+            # item = False
+            # if el:
+            #     class item:
+            #         pk = el[0]['id']
+            # conn.commit()
+            # conn.close()
 
             if not item:
                 print('The end...')
@@ -217,7 +202,7 @@ class Base:
 
                 freezing_model.objects.create(elements_id=item.pk, process_code=process_code)
                 # Base.debug('Freezing', process_code, item.pk)
-                return item
+                return Elements.objects.get(pk=item.pk)
 
             except django.db.utils.IntegrityError:
 

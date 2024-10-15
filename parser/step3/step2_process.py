@@ -2,9 +2,8 @@ import sys
 import pathlib
 import time
 import subprocess
-from datetime import datetime
-
 from django import db
+from django.db import transaction
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
@@ -29,7 +28,23 @@ class Step2Process(Base):
 
     def init(self) -> None:
 
+        # start_time = time.time()
+        #
+        # for connection_name in db.connections.databases:
+        #     db.connections[connection_name].close()
+        #
+        # with transaction.atomic():
+        #     self._step(self.__run, self.__set_err, self.__cur_class)
+        #
+        # if time.time() - start_time < 3:
+        #     time.sleep(time.time() - start_time)
+        #
+        # for connection_name in db.connections.databases:
+        #     db.connections[connection_name].close()
+
         while True:
+
+            start_time: float  = time.time()
 
             with open(f'{pathlib.Path(__file__).parent.resolve()}/exec.py', 'r') as f:
                 exec(f.read())
@@ -38,11 +53,17 @@ class Step2Process(Base):
                 return
 
             db.connections.close_all()
-            # print(f'{self.__cur_class} Step run', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
-            self._step(self.__run, self.__set_err, self.__cur_class)
+            with transaction.atomic():
 
-            time.sleep(3.5)
+                self._step(self.__run, self.__set_err, self.__cur_class)
+
+            db.connections.close_all()
+
+            print(f'{self.__cur_class}: Diff time {round(time.time() - start_time, 2)}')
+
+            if time.time() - start_time < 3:
+                time.sleep(time.time() - start_time)
 
     def __set_err(self) -> None:
 
