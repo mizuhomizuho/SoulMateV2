@@ -2,6 +2,8 @@ import subprocess
 import pathlib
 import time
 import sys
+from datetime import datetime
+from django import db
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
@@ -9,19 +11,18 @@ sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
 from parser.base import Base
 from app_main.models import Pipe, Step2FreezingElements, Step3FreezingElements, Debug
 
-
 class Step3(Base):
 
     __PULL: tuple[dict[str, str]] = (
 
-        {'proc': 'step3', 'el': 'chrome_3'},
-        {'proc': 'step3', 'el': 'chrome_my_vk'},
-        {'proc': 'step3', 'el': 'chrome_megafon_6114'},
-        {'proc': 'step3', 'el': 'chrome_mts_6192'},
-        {'proc': 'step3', 'el': 'chrome_mts_6227'},
+        # {'proc': 'step3', 'el': 'chrome_3'},
+        # {'proc': 'step3', 'el': 'chrome_my_vk'},
+        # {'proc': 'step3', 'el': 'chrome_megafon_6114'},
+        # {'proc': 'step3', 'el': 'chrome_mts_6192'},
+        # {'proc': 'step3', 'el': 'chrome_mts_6227'},
         {'proc': 'step3', 'el': 'chrome_mts_6209'},
-        {'proc': 'step3', 'el': 'chrome_mts_6217'},
-        {'proc': 'step3', 'el': 'chrome_mts_6214'},
+        # {'proc': 'step3', 'el': 'chrome_mts_6217'},
+        # {'proc': 'step3', 'el': 'chrome_mts_6214'},
 
         {'proc': 'step2', 'el': 'ListVkCom'},
         {'proc': 'step2', 'el': 'ListVk24Com'},
@@ -44,8 +45,18 @@ class Step3(Base):
 
             for item in self.__PULL:
 
+                db.connections.close_all()
+
+                with open(f'{pathlib.Path(__file__).parent.resolve()}/exec.py', 'r') as f:
+                    exec(f.read())
+                if Base.stop:
+                    print(f'Stop {__file__}')
+                    return
+
+                # print(Base.color(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'FAIL'))
+
                 pipe_ids: list[int] = []
-                pipe_all = Pipe.objects.all().order_by('-time_created')
+                pipe_all = Pipe.objects.all().order_by('-pk')
                 for pipe_el in pipe_all:
                     pipe_ids.append(pipe_el.pk)
                     print(pipe_el.value)

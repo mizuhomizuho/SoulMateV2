@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.common import NoSuchElementException
 import pathlib
 import subprocess
+from django import db
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
@@ -40,6 +41,14 @@ class Step3Process(Base):
 
         while True:
 
+            with open(f'{pathlib.Path(__file__).parent.resolve()}/exec.py', 'r') as f:
+                exec(f.read())
+            if Base.stop:
+                print(f'Stop {self.__cur_chrome}')
+                return
+
+            db.connections.close_all()
+
             self._step(self.__run, self.__set_err, self.__cur_chrome)
 
             time.sleep(8.88)
@@ -70,7 +79,9 @@ class Step3Process(Base):
         if len(sys.argv) >= 3 and sys.argv[2] == 'dev':
             exit()
 
-        self.__set_item()
+        if not self.__set_item():
+            print('No item!')
+            return
 
         url: str = f'https://vk.com/{self.__cur_item.nick}'
         print(Base.color(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'UNDERLINE'),
@@ -208,7 +219,7 @@ class Step3Process(Base):
         else:
             print(Base.color('Bad...', 'FAIL'))
 
-    def __set_item(self) -> None:
+    def __set_item(self) -> bool:
 
         self.__cur_item = self._get_item(
             Step3FreezingElements,
@@ -216,6 +227,11 @@ class Step3Process(Base):
             {'sections__in': (self.__GOOD_CAT_ID, self.__BAD_CAT_ID)},
             {'sections': self.__FROM_CAT_ID},
         )
+
+        if not self.__cur_item:
+            return False
+
+        return True
 
     def __bild_proxy_ext(self):
 
@@ -281,24 +297,29 @@ class Step3Process(Base):
 
     def __init_drv(self) -> None:
 
-        options = webdriver.ChromeOptions()
+        while True:
 
-        options.add_argument('--headless')
-        options.add_argument('--disable-blink-features=AutomationControlled')
-        options.add_argument(f'--user-data-dir={self.__CHROME_USER_DATA_DIR_PREFIX}{self.__cur_chrome}')
-        options.add_argument(f'--profile-directory={self.__CHROME_PROFILE_DIRECTORY}')
+            options = webdriver.ChromeOptions()
 
-        if self.__cur_chrome in CFG['proxy']:
-            self.__bild_proxy_ext()
-            plugin_file = f'{pathlib.Path(__file__).parent.resolve()}/proxy_auth_plugin_{self.__cur_chrome}.zip'
-            options.add_extension(plugin_file)
+            options.add_argument('--headless')
+            options.add_argument('--disable-blink-features=AutomationControlled')
+            options.add_argument(f'--user-data-dir={self.__CHROME_USER_DATA_DIR_PREFIX}{self.__cur_chrome}')
+            options.add_argument(f'--profile-directory={self.__CHROME_PROFILE_DIRECTORY}')
 
-        params: dict = {'options': options}
+            if self.__cur_chrome in CFG['proxy']:
+                self.__bild_proxy_ext()
+                plugin_file = f'{pathlib.Path(__file__).parent.resolve()}/proxy_auth_plugin_{self.__cur_chrome}.zip'
+                options.add_extension(plugin_file)
 
-        # selenium.common.exceptions.SessionNotCreatedException
-        self.__drv = webdriver.Chrome(**params)
+            params: dict = {'options': options}
 
-        self.__drv.maximize_window()
+            try:
+                self.__drv = webdriver.Chrome(**params)
+                self.__drv.maximize_window()
+                return
+            except selenium.common.exceptions.SessionNotCreatedException:
+                print('SessionNotCreatedException')
+                time.sleep(2)
 
 if __name__ == '__main__':
 

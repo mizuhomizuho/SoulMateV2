@@ -24,6 +24,8 @@ from app_main.models import Step3FreezingElements, Step2FreezingElements, Pipe, 
 
 class Base:
 
+    stop: bool = False
+
     __DEBUG_FILE: str = f'{pathlib.Path(__file__).parent.resolve()}/log/debug.json'
 
     __returned_sql: list = []
@@ -161,7 +163,7 @@ class Base:
         process_code: str,
         exclude_params: dict,
         filter_params: dict,
-    ) -> Elements:
+    ) -> Union[bool, Elements]:
 
         while True:
 
@@ -178,8 +180,8 @@ class Base:
                 pk__in=freezing_model.objects.all()).filter(**filter_params).order_by('?').first()
 
             if not item:
-                print('The end!!!')
-                time.sleep(8)
+                print('The end...')
+                return False
 
             # Base.debug('sql_pretty3', process_code, Base.sql_pretty())
 

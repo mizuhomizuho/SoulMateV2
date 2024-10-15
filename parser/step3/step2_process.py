@@ -2,6 +2,9 @@ import sys
 import pathlib
 import time
 import subprocess
+from datetime import datetime
+
+from django import db
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
@@ -28,9 +31,18 @@ class Step2Process(Base):
 
         while True:
 
+            with open(f'{pathlib.Path(__file__).parent.resolve()}/exec.py', 'r') as f:
+                exec(f.read())
+            if Base.stop:
+                print(f'Stop {self.__cur_class}')
+                return
+
+            db.connections.close_all()
+            # print(f'{self.__cur_class} Step run', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
             self._step(self.__run, self.__set_err, self.__cur_class)
 
-            time.sleep(8.88)
+            time.sleep(3.5)
 
     def __set_err(self) -> None:
 
