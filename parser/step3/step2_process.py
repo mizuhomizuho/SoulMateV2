@@ -2,7 +2,6 @@ import sys
 import pathlib
 import time
 import subprocess
-from django import db
 from django.db import transaction
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
@@ -28,20 +27,6 @@ class Step2Process(Base):
 
     def init(self) -> None:
 
-        # start_time = time.time()
-        #
-        # for connection_name in db.connections.databases:
-        #     db.connections[connection_name].close()
-        #
-        # with transaction.atomic():
-        #     self._step(self.__run, self.__set_err, self.__cur_class)
-        #
-        # if time.time() - start_time < 3:
-        #     time.sleep(time.time() - start_time)
-        #
-        # for connection_name in db.connections.databases:
-        #     db.connections[connection_name].close()
-
         while True:
 
             start_time: float  = time.time()
@@ -52,17 +37,11 @@ class Step2Process(Base):
                 print(f'Stop {self.__cur_class}')
                 return
 
-            db.connections.close_all()
-
             with transaction.atomic():
 
                 self._step(self.__run, self.__set_err, self.__cur_class)
 
-            db.connections.close_all()
-
-            print(f'{self.__cur_class}: Diff time {round(time.time() - start_time, 2)}')
-
-            if time.time() - start_time < 3:
+            if time.time() - start_time < 8.88:
                 time.sleep(time.time() - start_time)
 
     def __set_err(self) -> None:
@@ -76,7 +55,8 @@ class Step2Process(Base):
     def __run(self) -> None:
 
         if self.__is_err:
-            print('Isset err!')
+            print('Isset err (step2)!')
+            time.sleep(1)
             return
 
         globals()[self.__cur_class]().init()

@@ -36,9 +36,9 @@ class Step3(Base):
 
     def init(self) -> None:
 
-        Step2FreezingElements.objects.all().delete()
-        Step3FreezingElements.objects.all().delete()
-        Debug.objects.all().delete()
+        # Step2FreezingElements.objects.all().delete()
+        # Step3FreezingElements.objects.all().delete()
+        # Debug.objects.all().delete()
 
         while True:
 
@@ -52,7 +52,7 @@ class Step3(Base):
 
                 start_time = time.time()
 
-                db.connections.close_all()
+                # db.connections.close_all()
                 # for connection_name in db.connections.databases:
                 #     db.connections[connection_name].close()
 
@@ -72,13 +72,6 @@ class Step3(Base):
                     self.__process_pull[proc_key] = {
                         'proc': subprocess.Popen(args),
                     }
-
-                # elif item['proc'] == 'step2' and self.__process_pull[proc_key]['proc'].poll() is not None:
-                #
-                #     print(f'Del proc {proc_key}')
-                #     del self.__process_pull[proc_key]
-
-                db.connections.close_all()
 
                 if time.time() - start_time < 1:
                     time.sleep(time.time() - start_time)

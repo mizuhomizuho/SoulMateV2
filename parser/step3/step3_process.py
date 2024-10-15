@@ -10,7 +10,6 @@ from selenium.webdriver.common.by import By
 from selenium.common import NoSuchElementException
 import pathlib
 import subprocess
-from django import db
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
@@ -50,16 +49,10 @@ class Step3Process(Base):
                 print(f'Stop {self.__cur_chrome}')
                 return
 
-            db.connections.close_all()
-
             with transaction.atomic():
                 self._step(self.__run, self.__set_err, self.__cur_chrome)
 
-            db.connections.close_all()
-
-            print(f'{self.__cur_chrome}: Diff time {round(time.time() - start_time, 2)}')
-
-            if time.time() - start_time < 8:
+            if time.time() - start_time < 8.88:
                 time.sleep(time.time() - start_time)
 
     def __set_err(self) -> None:
@@ -77,7 +70,8 @@ class Step3Process(Base):
     def __run(self) -> None:
 
         if self.__is_err:
-            print('Isset err!')
+            print('Isset err (step3)!')
+            time.sleep(1)
             return
 
         try:
@@ -238,6 +232,8 @@ class Step3Process(Base):
 
         to_cat_id: int = self.__BAD_CAT_ID if is_bad else self.__GOOD_CAT_ID
         self.__cur_item.sections.add(to_cat_id)
+        self.__cur_item.step3_parsed = True
+        self.__cur_item.save()
         Step3FreezingElements.objects.filter(pk=self.__cur_item.pk).delete()
         if self.__GOOD_CAT_ID == to_cat_id:
             print(Base.color('GOOD!!!', 'WARNING'))
@@ -249,8 +245,8 @@ class Step3Process(Base):
         self.__cur_item = self._get_item(
             Step3FreezingElements,
             self.__cur_chrome,
-            {'sections__in': (self.__GOOD_CAT_ID, self.__BAD_CAT_ID)},
-            {'sections': self.__FROM_CAT_ID},
+            {'step3_parsed': True},
+            {'step2_good': True},
         )
 
         if not self.__cur_item:

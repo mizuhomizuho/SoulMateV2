@@ -1,4 +1,3 @@
-import time
 from typing import Any, Optional
 from datetime import datetime
 import requests
@@ -61,32 +60,14 @@ class Step2Base(Base):
 
 		try:
 
-			# Base.debug('__set_res start', self.__cur_item.pk, self.__pull_el.HOST)
-			#
-			# Base.debug('sql_pretty_1', self.__cur_item.pk, self.__pull_el.HOST, Base.sql_pretty())
+			self.__cur_item.step2_parsed = True
+			self.__cur_item.save()
 
 			Elements.sections.through.objects.bulk_create(self.__get_parsed_throughs(no_parsed) + [
 				Elements.sections.through(elements_id=self.__cur_item.pk, sections_id=sections_id),
 			])
 
-			# Base.debug('sql_pretty_2', self.__cur_item.pk, self.__pull_el.HOST, Base.sql_pretty())
-
 			Step2FreezingElements.objects.filter(pk=self.__cur_item.pk).delete()
-
-			# Base.debug('sql_pretty_3', self.__cur_item.pk, self.__pull_el.HOST, Base.sql_pretty())
-			#
-			# Base.debug('Freezing del', self.__cur_item.pk, self.__pull_el.HOST, {
-			# 	'sections_id': sections_id,
-			# 	'no_parsed': no_parsed,
-			# })
-			#
-			# i = 0
-			# for item in self.__get_parsed_throughs(no_parsed):
-			# 	Base.debug(f'Freezing del (more {i})', self.__cur_item.pk, self.__pull_el.HOST, {
-			# 		'__get_parsed_throughs.elements_id': item.elements_id,
-			# 		'__get_parsed_throughs.sections_id': item.sections_id,
-			# 	})
-			# 	i += 1
 
 		except django.db.utils.IntegrityError:
 			print('IntegrityError begin')
@@ -105,11 +86,7 @@ class Step2Base(Base):
 
 	def _request(self, url: str):
 
-		start_time: float = time.time()
-		res = requests.get(url, self.__get_headers(), timeout=8)
-		print(f'{self.__pull_el.HOST}: Diff time (requests) {round(time.time() - start_time, 2)}')
-
-		return res
+		return requests.get(url, self.__get_headers(), timeout=8)
 
 	def _set_men(self) -> None:
 
@@ -120,6 +97,8 @@ class Step2Base(Base):
 
 		print(msg)
 		self.__set_res(self.__pull_el.CONTINUE_CAT_ID, True)
+		self.__cur_item.step2_continue = self.__pull_el.CONTINUE_CAT_ID
+		self.__cur_item.save()
 
 	def _get_vk_nick(self) -> str:
 
@@ -129,16 +108,13 @@ class Step2Base(Base):
 
 		self.__set_res(self.__pull_el.__GOOD_CAT_ID)
 		msg: str = 'GOOD!!!'
-		need_save_item: bool = False
+		self.__cur_item.step2_good = True
 		if self.__cur_item.name != vk_name:
 			self.__cur_item.name = vk_name
-			need_save_item = True
 		if isinstance(vk_age, int):
 			self.__cur_item.age = vk_age
-			need_save_item = True
 			msg += f' AGE {vk_age}!!!'
-		if need_save_item:
-			self.__cur_item.save()
+		self.__cur_item.save()
 		print(Base.color(msg, 'OKGREEN'))
 
 	def _get_vk_id(self, pull_el: Any) -> int:
@@ -148,8 +124,8 @@ class Step2Base(Base):
 		db_item = self._get_item(
 			Step2FreezingElements,
 			pull_el.__class__.__name__,
-			{'sections__in': (self.__PARSED_CAT_ID, pull_el.CONTINUE_CAT_ID)},
-			{'sections__parent': self.__FROM_CAT_ID},
+			({'step2_parsed': True}, {'step2_continue': pull_el.CONTINUE_CAT_ID}),
+			{'step1': True},
 		)
 
 		self.__cur_item = db_item
