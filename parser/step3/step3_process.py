@@ -1,6 +1,5 @@
 import time
 import selenium
-from django.db import transaction
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium import webdriver
 import sys
@@ -49,11 +48,10 @@ class Step3Process(Base):
                 print(f'Stop {self.__cur_chrome}')
                 return
 
-            with transaction.atomic():
-                self._step(self.__run, self.__set_err, self.__cur_chrome)
+            self._step(self.__run, self.__set_err, self.__cur_chrome)
 
             if time.time() - start_time < 8.88:
-                time.sleep(time.time() - start_time)
+                time.sleep(8.88 - (time.time() - start_time))
 
     def __set_err(self) -> None:
 

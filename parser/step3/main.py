@@ -36,9 +36,9 @@ class Step3(Base):
 
     def init(self) -> None:
 
-        # Step2FreezingElements.objects.all().delete()
-        # Step3FreezingElements.objects.all().delete()
-        # Debug.objects.all().delete()
+        Step2FreezingElements.objects.all().delete()
+        Step3FreezingElements.objects.all().delete()
+        Debug.objects.all().delete()
 
         while True:
 
@@ -74,7 +74,7 @@ class Step3(Base):
                     }
 
                 if time.time() - start_time < 1:
-                    time.sleep(time.time() - start_time)
+                    time.sleep(1 - (time.time() - start_time))
 
 if __name__ == '__main__':
 

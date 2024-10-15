@@ -2,7 +2,6 @@ import sys
 import pathlib
 import time
 import subprocess
-from django.db import transaction
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
@@ -37,12 +36,10 @@ class Step2Process(Base):
                 print(f'Stop {self.__cur_class}')
                 return
 
-            with transaction.atomic():
-
-                self._step(self.__run, self.__set_err, self.__cur_class)
+            self._step(self.__run, self.__set_err, self.__cur_class)
 
             if time.time() - start_time < 8.88:
-                time.sleep(time.time() - start_time)
+                time.sleep(8.88 - (time.time() - start_time))
 
     def __set_err(self) -> None:
 

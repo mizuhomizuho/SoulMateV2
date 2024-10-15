@@ -10,6 +10,7 @@ import sqlparse
 from django import db
 import json
 import pymysql
+from django.db import transaction
 from pymysql.converters import escape_string
 import os
 import django
@@ -106,7 +107,8 @@ class Base:
 
         is_error: bool = False
         try:
-            try_fns()
+            with transaction.atomic():
+                try_fns()
         except Exception as ex:
             ex_fns()
             is_error = True
@@ -131,11 +133,13 @@ class Base:
         filter_params: dict,
     ) -> Union[bool, Elements]:
 
+        err_i = 0
+
         while True:
 
-            freezing = freezing_model.objects.filter(process_code=process_code)
-            if freezing:
-                return Elements.objects.get(pk=freezing[0].elements_id)
+            # freezing = freezing_model.objects.filter(process_code=process_code)
+            # if freezing:
+            #     return Elements.objects.get(pk=freezing[0].elements_id)
 
             item = Elements.objects
 
@@ -157,6 +161,10 @@ class Base:
                 freezing_model.objects.create(elements_id=item.pk, process_code=process_code)
                 return Elements.objects.get(pk=item.pk)
 
-            except django.db.utils.IntegrityError:
+            except (django.db.utils.IntegrityError, django.db.utils.OperationalError):
+
+                err_i += 1
+                if err_i >= 3:
+                    raise
 
                 pass
