@@ -1,38 +1,58 @@
-import subprocess
+from datetime import datetime
+from multiprocessing import Process, Queue
 import pathlib
 import time
 import sys
-from django import db
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
 
 from parser.base import Base
-from app_main.models import Pipe, Step2FreezingElements, Step3FreezingElements, Debug
+from parser.step3.step2_process import Step2Process
+from parser.step3.step3_process import Step3Process
+from app_main.models import Step2FreezingElements, Step3FreezingElements, Debug
 
 class Step3(Base):
 
-    __PULL: tuple[dict[str, str]] = (
+    __PULL: dict[str, dict] = {
 
-        # {'proc': 'step3', 'el': 'chrome_3'},
-        # {'proc': 'step3', 'el': 'chrome_my_vk'},
-        # {'proc': 'step3', 'el': 'chrome_megafon_6114'},
-        # {'proc': 'step3', 'el': 'chrome_mts_6192'},
-        # {'proc': 'step3', 'el': 'chrome_mts_6227'},
-        # {'proc': 'step3', 'el': 'chrome_mts_6209'},
-        {'proc': 'step3', 'el': 'chrome_mts_6217'},
-        # {'proc': 'step3', 'el': 'chrome_mts_6214'},
+        # 'chrome_3': {'inst': Step3Process},
+        # 'chrome_my_vk': {'inst': Step3Process},
+        # 'chrome_megafon_6114': {'inst': Step3Process},
+        # 'chrome_mts_6192': {'inst': Step3Process},
+        # 'chrome_mts_6227': {'inst': Step3Process},
+        # 'chrome_mts_6209': {'inst': Step3Process},
+        'chrome_mts_6217': {'inst': Step3Process},
+        'chrome_mts_6214': {'inst': Step3Process},
 
-        {'proc': 'step2', 'el': 'ListVkCom'},
-        {'proc': 'step2', 'el': 'ListVk24Com'},
-        {'proc': 'step2', 'el': 'WennabeCom'},
-        {'proc': 'step2', 'el': 'LibLiVkCom'},
-        {'proc': 'step2', 'el': 'InfoPeopleCom'},
-        {'proc': 'step2', 'el': 'VkstranaRu'},
-        {'proc': 'step2', 'el': 'Top100vkCom'},
-    )
+        'ListVkCom': {'inst': Step2Process},
+        'ListVk24Com': {'inst': Step2Process},
+        'WennabeCom': {'inst': Step2Process},
+        'LibLiVkCom': {'inst': Step2Process},
+        'InfoPeopleCom': {'inst': Step2Process},
+        'VkstranaRu': {'inst': Step2Process},
+        'Top100vkCom': {'inst': Step2Process},
+    }
 
-    __process_pull: dict[str] = {}
+    __get_queue: Queue
+    __res_queues: dict[str, Queue]
+
+    def __init__(self):
+
+        self.__get_queue = Queue()
+        self.__res_queues: dict[str, Queue] = {}
+
+    def get_els_daemon(self) -> None:
+
+        while True:
+
+            client = self.__get_queue.get()
+            self.__res_queues[client['process_code']].put(self._get_item_base(
+                client['process_code'],
+                client['freezing_model'],
+                client['exclude_params'],
+                client['filter_params'],
+            ))
 
     def init(self) -> None:
 
@@ -40,41 +60,23 @@ class Step3(Base):
         Step3FreezingElements.objects.all().delete()
         Debug.objects.all().delete()
 
+        for proc in self.__PULL:
+
+            params = self.__PULL[proc]
+            self.__res_queues[proc] = Queue()
+            inst = params['inst'](proc)
+            proc = Process(target=inst.init, args=(self.__get_queue, self.__res_queues[proc]))
+            proc.daemon = True
+            proc.start()
+
+        for i in range(3):
+            proc = Process(target=self.get_els_daemon)
+            proc.daemon = True
+            proc.start()
+
         while True:
-
-            for item in self.__PULL:
-
-                with open(f'{pathlib.Path(__file__).parent.resolve()}/exec.py', 'r') as f:
-                    exec(f.read())
-                if Base.stop:
-                    print(f'Stop {__file__}')
-                    return
-
-                start_time = time.time()
-
-                # db.connections.close_all()
-                # for connection_name in db.connections.databases:
-                #     db.connections[connection_name].close()
-
-                pipe_ids: list[int] = []
-                pipe_all = Pipe.objects.all().order_by('-pk')
-                for pipe_el in pipe_all:
-                    pipe_ids.append(pipe_el.pk)
-                    print(pipe_el.value)
-                Pipe.objects.filter(pk__in=pipe_ids).delete()
-
-                proc_key: str = f'{item['proc']}_{item['el']}'
-
-                if proc_key not in self.__process_pull:
-
-                    args = (f'{pathlib.Path(__file__).parent.resolve()}/../../.venv/Scripts/python.exe',
-                            f'{pathlib.Path(__file__).parent.resolve()}/{item['proc']}_process.py', item['el'])
-                    self.__process_pull[proc_key] = {
-                        'proc': subprocess.Popen(args),
-                    }
-
-                if time.time() - start_time < 1:
-                    time.sleep(1 - (time.time() - start_time))
+            print(datetime.now().strftime('%H-%M-%S'))
+            time.sleep(2)
 
 if __name__ == '__main__':
 

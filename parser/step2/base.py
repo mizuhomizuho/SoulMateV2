@@ -122,8 +122,8 @@ class Step2Base(Base):
 		self.__pull_el = pull_el
 
 		db_item = self._get_item(
-			Step2FreezingElements,
 			pull_el.__class__.__name__,
+			Step2FreezingElements,
 			({'step2_parsed': True}, {'step2_continue': pull_el.CONTINUE_CAT_ID}),
 			{'step1': True},
 		)

@@ -1,6 +1,8 @@
+from __future__ import annotations
 import io
 import time
 import traceback
+from multiprocessing import Queue
 from typing import Union, Type
 import sys
 import pathlib
@@ -12,6 +14,7 @@ import json
 import pymysql
 from django.db import transaction
 from pymysql.converters import escape_string
+from typing import TYPE_CHECKING
 import os
 import django
 
@@ -20,11 +23,16 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'soul_mate.settings')
 django.setup()
 
 from app_catalog.models import Elements
-from app_main.models import Step3FreezingElements, Step2FreezingElements, Pipe, Debug
+from app_main.models import Debug, Step2FreezingElements, Step3FreezingElements
+
+if TYPE_CHECKING:
+    from parser.step3.step2_process import Step2Process
+    from parser.step3.step3_process import Step3Process
 
 class Base:
 
-    stop: bool = False
+    cur_get_queue: Queue
+    cur_res_queue: Queue
 
     __DEBUG_FILE: str = f'{pathlib.Path(__file__).parent.resolve()}/log/debug.json'
 
@@ -100,7 +108,7 @@ class Base:
         }
         return f'{colors[key]}{string}{colors['ENDC']}'
 
-    def _step(self, try_fns: callable, ex_fns: callable, step_name: str) -> None:
+    def _step(self, proc_code: str, proc_inst: Union[Step2Process, Step3Process]) -> None:
 
         out = io.StringIO()
         sys.stdout = out
@@ -108,63 +116,74 @@ class Base:
         is_error: bool = False
         try:
             with transaction.atomic():
-                try_fns()
+                proc_inst.run()
         except Exception as ex:
-            ex_fns()
+            proc_inst.set_err()
             is_error = True
             print('ERROR!!!')
             self._print_common_exception(ex)
 
         sys.stdout = sys.__stdout__
         if out.getvalue() != '':
-            step_name_color = self.color(f'{step_name}:', 'OKCYAN')
+            step_name_color = self.color(f'{proc_code}:', 'OKCYAN')
             step_out: str = f'{step_name_color} {f'\n{step_name_color} '.join(out.getvalue().strip().split('\n'))}'
-            Pipe.objects.create(value=step_out)
+            print(step_out)
             if is_error:
                 p = pathlib.Path(__file__).parent.resolve()
-                log_file: str = f'{p}/log/el_err_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{step_name}.log'
+                d: str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+                log_file: str = f'{p}/log/el_err_{d}_{proc_code}.log'
                 with codecs.open(log_file, 'w', 'utf-8') as f:
                     f.write(step_out)
 
     def _get_item(self,
-        freezing_model: Union[Type[Step2FreezingElements], Type[Step3FreezingElements]],
         process_code: str,
+        freezing_model: Union[Type[Step2FreezingElements], Type[Step3FreezingElements]],
         exclude_params: dict,
         filter_params: dict,
     ) -> Union[bool, Elements]:
 
-        err_i = 0
+        Base.cur_get_queue.put({
+            'process_code': process_code,
+            'freezing_model': freezing_model,
+            'exclude_params': exclude_params,
+            'filter_params': filter_params,
+        })
 
-        while True:
+        return Base.cur_res_queue.get()
 
-            # freezing = freezing_model.objects.filter(process_code=process_code)
-            # if freezing:
-            #     return Elements.objects.get(pk=freezing[0].elements_id)
+    def _get_item_base(self,
+        process_code: str,
+        freezing_model: Union[Type[Step2FreezingElements], Type[Step3FreezingElements]],
+        exclude_params: dict,
+        filter_params: dict,
+    ) -> Union[bool, Elements]:
 
-            item = Elements.objects
+        item = Elements.objects
 
-            if isinstance(exclude_params, tuple):
-                for excl_el in exclude_params:
-                    item = item.exclude(**excl_el)
-            else:
-                item = item.exclude(**exclude_params)
+        if isinstance(exclude_params, tuple):
+            for excl_el in exclude_params:
+                item = item.exclude(**excl_el)
+        else:
+            item = item.exclude(**exclude_params)
 
-            item = item.exclude(pk__in=freezing_model.objects.all()).filter(
-                **filter_params).only('id').order_by('?').first()
+        item = item.exclude(pk__in=freezing_model.objects.all()).filter(
+            **filter_params).only('id').order_by('?').first()
 
-            if not item:
-                print('The end...')
-                return False
+        if not item:
+            print(f'The end ({process_code})...')
+            return False
 
-            try:
+        # freezing = freezing_model.objects.filter(elements_id=item.pk)
+        # if freezing:
+        #     print(f'Isset freezing (1) {process_code} {item.pk}...')
+        #     return False
 
-                freezing_model.objects.create(elements_id=item.pk, process_code=process_code)
-                return Elements.objects.get(pk=item.pk)
+        try:
 
-            except (django.db.utils.IntegrityError, django.db.utils.OperationalError):
+            freezing_model.objects.create(elements_id=item.pk, process_code=process_code)
+            return Elements.objects.get(pk=item.pk)
 
-                err_i += 1
-                if err_i >= 3:
-                    raise
+        except django.db.utils.IntegrityError:
 
-                pass
+            print(f'Isset freezing {process_code} {item.pk}...')
+            return False

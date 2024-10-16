@@ -1,4 +1,5 @@
 import time
+from multiprocessing import Queue
 import selenium
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium import webdriver
@@ -9,6 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium.common import NoSuchElementException
 import pathlib
 import subprocess
+from django import db
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
@@ -36,24 +38,21 @@ class Step3Process(Base):
 
         self.__cur_chrome = chrome
 
-    def init(self) -> None:
+    def init(self, get_queue: Queue, res_queue: Queue) -> None:
+
+        Base.cur_get_queue = get_queue
+        Base.cur_res_queue = res_queue
 
         while True:
 
             start_time: float  = time.time()
 
-            with open(f'{pathlib.Path(__file__).parent.resolve()}/exec.py', 'r') as f:
-                exec(f.read())
-            if Base.stop:
-                print(f'Stop {self.__cur_chrome}')
-                return
-
-            self._step(self.__run, self.__set_err, self.__cur_chrome)
+            self._step(self.__cur_chrome, self)
 
             if time.time() - start_time < 8.88:
                 time.sleep(8.88 - (time.time() - start_time))
 
-    def __set_err(self) -> None:
+    def set_err(self) -> None:
 
         if not self.__is_err:
             subprocess.Popen(f'py -c "import ctypes'
@@ -65,10 +64,10 @@ class Step3Process(Base):
 
         self.__is_err = True
 
-    def __run(self) -> None:
+    def run(self) -> None:
 
         if self.__is_err:
-            print('Isset err (step3)!')
+            print(f'Isset err ({self.__cur_chrome})!')
             time.sleep(1)
             return
 
@@ -241,8 +240,8 @@ class Step3Process(Base):
     def __set_item(self) -> bool:
 
         self.__cur_item = self._get_item(
-            Step3FreezingElements,
             self.__cur_chrome,
+            Step3FreezingElements,
             {'step3_parsed': True},
             {'step2_good': True},
         )

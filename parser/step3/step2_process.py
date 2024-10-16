@@ -2,6 +2,7 @@ import sys
 import pathlib
 import time
 import subprocess
+from multiprocessing import Queue
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
@@ -18,30 +19,28 @@ from parser.step2.top100vk_com import Top100vkCom
 class Step2Process(Base):
 
     __cur_class: str
+
     __is_err: bool = False
 
-    def __init__(self, cur_class: str):
+    def __init__(self, class_name: str):
 
-        self.__cur_class = cur_class
+        self.__cur_class = class_name
 
-    def init(self) -> None:
+    def init(self, get_queue: Queue, res_queue: Queue) -> None:
+
+        Base.cur_get_queue = get_queue
+        Base.cur_res_queue = res_queue
 
         while True:
 
             start_time: float  = time.time()
 
-            with open(f'{pathlib.Path(__file__).parent.resolve()}/exec.py', 'r') as f:
-                exec(f.read())
-            if Base.stop:
-                print(f'Stop {self.__cur_class}')
-                return
-
-            self._step(self.__run, self.__set_err, self.__cur_class)
+            self._step(self.__cur_class, self)
 
             if time.time() - start_time < 8.88:
                 time.sleep(8.88 - (time.time() - start_time))
 
-    def __set_err(self) -> None:
+    def set_err(self) -> None:
 
         if not self.__is_err:
             subprocess.Popen(f'py -c "import ctypes'
@@ -49,15 +48,11 @@ class Step2Process(Base):
 
         self.__is_err = True
 
-    def __run(self) -> None:
+    def run(self) -> None:
 
         if self.__is_err:
-            print('Isset err (step2)!')
+            print(f'Isset err ({self.__cur_class})!')
             time.sleep(1)
             return
 
         globals()[self.__cur_class]().init()
-
-if __name__ == '__main__':
-
-    Step2Process(sys.argv[1]).init()
