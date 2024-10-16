@@ -22,7 +22,7 @@ class Step3(Base):
         # 'chrome_mts_6192': {'inst': Step3Process},
         # 'chrome_mts_6227': {'inst': Step3Process},
         # 'chrome_mts_6209': {'inst': Step3Process},
-        'chrome_mts_6217': {'inst': Step3Process},
+        # 'chrome_mts_6217': {'inst': Step3Process},
         'chrome_mts_6214': {'inst': Step3Process},
 
         'ListVkCom': {'inst': Step2Process},
@@ -75,8 +75,7 @@ class Step3(Base):
             proc.start()
 
         while True:
-            print(datetime.now().strftime('%H-%M-%S'))
-            time.sleep(2)
+            time.sleep(8)
 
 if __name__ == '__main__':
 

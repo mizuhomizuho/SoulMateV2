@@ -10,7 +10,6 @@ from selenium.webdriver.common.by import By
 from selenium.common import NoSuchElementException
 import pathlib
 import subprocess
-from django import db
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')

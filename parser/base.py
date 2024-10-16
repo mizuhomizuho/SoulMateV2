@@ -173,11 +173,6 @@ class Base:
             print(f'The end ({process_code})...')
             return False
 
-        # freezing = freezing_model.objects.filter(elements_id=item.pk)
-        # if freezing:
-        #     print(f'Isset freezing (1) {process_code} {item.pk}...')
-        #     return False
-
         try:
 
             freezing_model.objects.create(elements_id=item.pk, process_code=process_code)
