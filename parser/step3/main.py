@@ -4,6 +4,8 @@ import pathlib
 import time
 import sys
 
+from django.db import transaction
+
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
 
@@ -48,20 +50,24 @@ class Step3(Base):
 
         while True:
 
-            client = self.__get_queue.get()
-            self.__res_queues[client['process_code']].put(self._get_item_base(
-                client['process_code'],
-                client['freezing_model'],
-                client['exclude_params'],
-                client['filter_params'],
-            ))
+            with transaction.atomic():
+
+                client = self.__get_queue.get()
+                self.__res_queues[client['process_code']].put(self._get_item_base(
+                    client['process_code'],
+                    client['freezing_model'],
+                    client['exclude_params'],
+                    client['filter_params'],
+                ))
 
     def commit_queue_daemon(self) -> None:
 
         while True:
 
-            client = self.__commit_queue.get()
-            getattr(client['inst'], client['method'])(*client['args'])
+            with transaction.atomic():
+
+                client = self.__commit_queue.get()
+                getattr(client['inst'], client['method'])(*client['args'])
 
 
     def init(self) -> None:

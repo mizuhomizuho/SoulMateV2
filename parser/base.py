@@ -116,8 +116,7 @@ class Base:
 
         is_error: bool = False
         try:
-            with transaction.atomic():
-                proc_inst.run()
+            proc_inst.run()
         except Exception as ex:
             proc_inst.set_err()
             is_error = True
