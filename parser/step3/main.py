@@ -50,9 +50,9 @@ class Step3(Base):
 
         while True:
 
-            with transaction.atomic():
+            client = self.__get_queue.get()
 
-                client = self.__get_queue.get()
+            with transaction.atomic():
                 self.__res_queues[client['process_code']].put(self._get_item_base(
                     client['process_code'],
                     client['freezing_model'],
@@ -64,9 +64,9 @@ class Step3(Base):
 
         while True:
 
-            with transaction.atomic():
+            client = self.__commit_queue.get()
 
-                client = self.__commit_queue.get()
+            with transaction.atomic():
                 getattr(client['inst'], client['method'])(*client['args'])
 
 
