@@ -383,7 +383,3 @@ class Step3Process(Base):
             except selenium.common.exceptions.SessionNotCreatedException:
                 print('SessionNotCreatedException')
                 time.sleep(2)
-
-if __name__ == '__main__':
-
-    Step3Process(sys.argv[1]).init()
