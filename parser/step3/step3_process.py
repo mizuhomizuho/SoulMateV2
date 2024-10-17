@@ -111,9 +111,15 @@ class Step3Process(Base):
 
     def __del_freez(self) -> None:
 
+        inst = self
+        try:
+            del inst.__drv
+        except AttributeError:
+            pass
+
         Base.cur_commit_queue.put({
             'method': 'commit_del_freez',
-            'inst': self,
+            'inst': inst,
             'args': tuple(),
         })
 
@@ -252,9 +258,15 @@ class Step3Process(Base):
 
     def __set_res(self, is_bad: bool):
 
+        inst = self
+        try:
+            del inst.__drv
+        except AttributeError:
+            pass
+
         Base.cur_commit_queue.put({
             'method': 'commit_set_res',
-            'inst': self,
+            'inst': inst,
             'args': (is_bad,),
         })
 
@@ -264,7 +276,7 @@ class Step3Process(Base):
         self.__cur_item.sections.add(to_cat_id)
         self.__cur_item.step3_parsed = True
         self.__cur_item.save()
-        self.__del_freez()
+        self.__del_freez_base()
         if self.__GOOD_CAT_ID == to_cat_id:
             print(Base.color('GOOD!!!', 'WARNING'))
         else:

@@ -25,7 +25,7 @@ class Step3(Base):
         # 'chrome_mts_6227': {'inst': Step3Process},
         # 'chrome_mts_6209': {'inst': Step3Process},
         # 'chrome_mts_6217': {'inst': Step3Process},
-        # 'chrome_mts_6214': {'inst': Step3Process},
+        'chrome_mts_6214': {'inst': Step3Process},
 
         'ListVkCom': {'inst': Step2Process},
         'ListVk24Com': {'inst': Step2Process},
