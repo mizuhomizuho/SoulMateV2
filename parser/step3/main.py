@@ -3,8 +3,8 @@ from multiprocessing import Process, Queue
 import pathlib
 import time
 import sys
-
 from django.db import transaction
+from django import db
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
@@ -52,6 +52,7 @@ class Step3(Base):
 
             client = self.__get_queue.get()
 
+            db.connections.close_all()
             with transaction.atomic():
                 self.__res_queues[client['process_code']].put(self._get_item_base(
                     client['process_code'],
@@ -66,6 +67,7 @@ class Step3(Base):
 
             client = self.__commit_queue.get()
 
+            db.connections.close_all()
             with transaction.atomic():
                 getattr(client['inst'], client['method'])(*client['args'])
 
