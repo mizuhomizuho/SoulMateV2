@@ -97,7 +97,7 @@ class Step3(Base):
         proc.start()
 
         while True:
-            time.sleep(8)
+            pass
 
 if __name__ == '__main__':
 
