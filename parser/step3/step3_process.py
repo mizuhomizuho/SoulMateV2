@@ -79,8 +79,8 @@ class Step3Process(Base):
         except AttributeError:
             self.__init_drv()
 
-        if len(sys.argv) >= 3 and sys.argv[2] == 'dev':
-            exit()
+        # if len(sys.argv) >= 2 and sys.argv[1] == 'dev':
+        #     exit()
 
         if not self.__set_item():
             print('No item!')
