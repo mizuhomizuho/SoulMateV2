@@ -21,9 +21,11 @@ class VkstranaRu(Step2Base):
 			req = self._request(f'https://{self.HOST}/{vk_id}')
 		except requests.exceptions.Timeout:
 			print('Timed out')
+			self._del_freezing()
 			return
 		except requests.exceptions.ConnectionError:
 			print('ConnectionError')
+			self._del_freezing()
 			return
 
 		if req.status_code == 404:
@@ -32,16 +34,19 @@ class VkstranaRu(Step2Base):
 
 		if req.status_code == 502:
 			print('Internal Server Error 502...')
+			self._del_freezing()
 			return
 
 		if req.status_code == 504:
 			print('Internal Server Error 504...')
+			self._del_freezing()
 			return
 
 		if req.status_code != 200:
 			print('BODY BEGIN:')
 			print(req.text)
 			print('BODY END.')
+			self._del_freezing()
 			raise Exception('Bad status_code', req.status_code)
 
 		html: str = req.text
@@ -56,19 +61,29 @@ class VkstranaRu(Step2Base):
 			print(req.text)
 			print('BODY END.')
 
-		assert len(box) == 1
+		if not (len(box) == 1):
+			self._del_freezing()
+			raise Exception('Err!!!')
 
 		def get_field_val(title: str, optional: bool = False) -> str:
 			el = box[0].findAll('h4', string=title)
 			if optional and not len(el):
 				return ''
-			assert len(el) == 1
+			if not (len(el) == 1):
+				self._del_freezing()
+				raise Exception('Err!!!')
 			el_parent = el[0].findParent('div', attrs={'class': 'line_block'})
-			assert el_parent is not None
+			if not (el_parent is not None):
+				self._del_freezing()
+				raise Exception('Err!!!')
 			el_parent = el_parent.findParent('div', attrs={'class': 'information_about_me_block'})
-			assert el_parent is not None
+			if not (el_parent is not None):
+				self._del_freezing()
+				raise Exception('Err!!!')
 			el_val = el_parent.findChild('p')
-			assert el_val is not None
+			if not (el_val is not None):
+				self._del_freezing()
+				raise Exception('Err!!!')
 			return el_val.contents[0].strip()
 
 		vk_city: str = get_field_val('Родной город', True)
@@ -78,7 +93,9 @@ class VkstranaRu(Step2Base):
 			return
 
 		vk_sex: str = get_field_val('Пол')
-		assert vk_sex in ('женский', 'мужской')
+		if not (vk_sex in ('женский', 'мужской')):
+			self._del_freezing()
+			raise Exception('Err!!!')
 
 		if vk_sex != 'женский':
 			self._set_men()

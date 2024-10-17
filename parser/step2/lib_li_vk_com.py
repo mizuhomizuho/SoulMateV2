@@ -21,6 +21,7 @@ class LibLiVkCom(Step2Base):
 			req = self._request(f'https://{self.HOST}/{vk_id}/')
 		except requests.exceptions.Timeout:
 			print('Timed out')
+			self._del_freezing()
 			return
 
 		if req.status_code == 404:
@@ -31,6 +32,7 @@ class LibLiVkCom(Step2Base):
 			print('BODY BEGIN:')
 			print(req.text)
 			print('BODY END.')
+			self._del_freezing()
 			raise Exception('Bad status_code', req.status_code)
 
 		html: str = req.text
@@ -38,19 +40,25 @@ class LibLiVkCom(Step2Base):
 		soup = BeautifulSoup(html, 'html.parser')
 
 		box = soup.select('#dle-content #full ul.short-list')
-		assert len(box) == 1
+		if not (len(box) == 1):
+			self._del_freezing()
+			raise Exception('Err!!!')
 
 		def get_field_val(title: str, optional: bool = False) -> str:
 			el = box[0].findAll('span', string=title)
 			if optional and not len(el):
 				return ''
-			assert len(el) == 1
+			if not (len(el) == 1):
+				self._del_freezing()
+				raise Exception('Err!!!')
 			el_parent = el[0].findParent('li')
-			assert (
+			if not (
 				el_parent is not None
 				and len(el_parent.contents) == 2
 				and str(el_parent.contents[0]) == f'<span>{title}</span>'
-			)
+			):
+				self._del_freezing()
+				raise Exception('Err!!!')
 			return el_parent.contents[1].strip()
 
 		vk_city: str = get_field_val('Страна:', True)
@@ -60,14 +68,18 @@ class LibLiVkCom(Step2Base):
 			return
 
 		vk_sex: str = get_field_val('Пол:')
-		assert vk_sex in ('женский', 'мужской')
+		if not (vk_sex in ('женский', 'мужской')):
+			self._del_freezing()
+			raise Exception('Err!!!')
 
 		if vk_sex != 'женский':
 			self._set_men()
 			return
 
 		h1_el = soup.select('#dle-content .fheader h1')
-		assert len(h1_el) == 1
+		if not (len(h1_el) == 1):
+			self._del_freezing()
+			raise Exception('Err!!!')
 		vk_name: str = h1_el[0].contents[0].strip()
 
 		vk_age: Optional[int] = None

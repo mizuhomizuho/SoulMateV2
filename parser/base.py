@@ -33,6 +33,7 @@ class Base:
 
     cur_get_queue: Queue
     cur_res_queue: Queue
+    cur_commit_queue: Queue
 
     __DEBUG_FILE: str = f'{pathlib.Path(__file__).parent.resolve()}/log/debug.json'
 

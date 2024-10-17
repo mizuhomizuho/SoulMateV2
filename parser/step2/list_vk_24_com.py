@@ -23,6 +23,7 @@ class ListVk24Com(Step2Base):
 			req = self._request(f'https://{self.HOST}/vk/{vk_nick}/')
 		except requests.exceptions.Timeout:
 			print('Timed out')
+			self._del_freezing()
 			return
 
 		if req.status_code == 404:
@@ -31,12 +32,14 @@ class ListVk24Com(Step2Base):
 
 		if req.status_code == 500:
 			print('Http status 500...')
+			self._del_freezing()
 			return
 
 		if req.status_code != 200:
 			print('BODY BEGIN:')
 			print(req.text)
 			print('BODY END.')
+			self._del_freezing()
 			raise Exception('Bad status_code', req.status_code)
 
 		html: str = req.text
@@ -47,11 +50,17 @@ class ListVk24Com(Step2Base):
 			el = soup.findAll('div', string=title, attrs={'class': 'field'})
 			if optional and not len(el):
 				return ''
-			assert len(el) == 1
+			if not (len(el) == 1):
+				self._del_freezing()
+				raise Exception('Err!!!')
 			el_parent = el[0].findParent('div', attrs={'class': 'line_data'})
-			assert el_parent is not None
+			if not (el_parent is not None):
+				self._del_freezing()
+				raise Exception('Err!!!')
 			el_val = el_parent.findChild('div', attrs={'class': 'field_data'})
-			assert el_val is not None
+			if not (el_val is not None):
+				self._del_freezing()
+				raise Exception('Err!!!')
 			return el_val.contents[0].strip()
 
 		vk_city1: str = get_field_val('Место проживания:', True)
@@ -62,7 +71,9 @@ class ListVk24Com(Step2Base):
 			return
 
 		vk_sex: str = get_field_val('Пол:')
-		assert vk_sex in ('женский', 'мужской')
+		if not (vk_sex in ('женский', 'мужской')):
+			self._del_freezing()
+			raise Exception('Err!!!')
 
 		if vk_sex != 'женский':
 			self._set_men()

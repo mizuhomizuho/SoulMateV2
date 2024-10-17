@@ -41,6 +41,23 @@ class Step2Base(Base):
 			'Cookie': 'csrftoken=WX9AWbKbGyJR5q1aNQTuHVnACG81zkdM; sessionid=sh73pw3ihxxcu1nm5qq0iqoj5lnytq77',
 		}
 
+	def _del_freezing(self) -> None:
+
+		Base.cur_commit_queue.put({
+			'method': 'commit_del_freezing',
+			'inst': self,
+			'args': tuple(),
+		})
+		# self.commit_del_freezing()
+
+	def commit_del_freezing(self) -> None:
+
+		self.__del_freezing_base()
+
+	def __del_freezing_base(self) -> None:
+
+		Step2FreezingElements.objects.filter(pk=self.__cur_item.pk).delete()
+
 	def _get_city(self) -> str:
 
 		return self.__CITY
@@ -67,7 +84,7 @@ class Step2Base(Base):
 				Elements.sections.through(elements_id=self.__cur_item.pk, sections_id=sections_id),
 			])
 
-			Step2FreezingElements.objects.filter(pk=self.__cur_item.pk).delete()
+			self.__del_freezing_base()
 
 		except django.db.utils.IntegrityError:
 			print('IntegrityError begin')
@@ -81,6 +98,15 @@ class Step2Base(Base):
 
 	def _set_no_city(self) -> None:
 
+		Base.cur_commit_queue.put({
+			'method': 'commit_set_no_city_base',
+			'inst': self,
+			'args': tuple(),
+		})
+		# self.commit_set_no_city_base()
+
+	def commit_set_no_city_base(self) -> None:
+
 		print('Continue (city)...')
 		self.__set_res(self.__pull_el.NO_CITY_CAT_ID)
 
@@ -90,10 +116,28 @@ class Step2Base(Base):
 
 	def _set_men(self) -> None:
 
+		Base.cur_commit_queue.put({
+			'method': 'commit_set_men_base',
+			'inst': self,
+			'args': tuple(),
+		})
+		# self.commit_set_men_base()
+
+	def commit_set_men_base(self) -> None:
+
 		print('Continue (sex)...')
 		self.__set_res(self.__pull_el.MAN_CAT_ID)
 
 	def _set_continue(self, msg: str = 'Continue (404)...') -> None:
+
+		Base.cur_commit_queue.put({
+			'method': 'commit_set_continue_base',
+			'inst': self,
+			'args': (msg,),
+		})
+		# self.commit_set_continue_base(msg)
+
+	def commit_set_continue_base(self, msg: str) -> None:
 
 		print(msg)
 		self.__set_res(self.__pull_el.CONTINUE_CAT_ID, True)
@@ -105,6 +149,15 @@ class Step2Base(Base):
 		return self.__cur_item.nick
 
 	def _set_good(self, vk_name: str, vk_age: Optional[int]) -> None:
+
+		Base.cur_commit_queue.put({
+			'method': 'commit_set_good_base',
+			'inst': self,
+			'args': (vk_name, vk_age,),
+		})
+		# self.commit_set_good_base(vk_name, vk_age)
+
+	def commit_set_good_base(self, vk_name: str, vk_age: Optional[int]) -> None:
 
 		self.__set_res(self.__pull_el.__GOOD_CAT_ID)
 		msg: str = 'GOOD!!!'

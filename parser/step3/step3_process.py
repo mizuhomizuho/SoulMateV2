@@ -37,16 +37,20 @@ class Step3Process(Base):
 
         self.__cur_chrome = chrome
 
-    def init(self, get_queue: Queue, res_queue: Queue) -> None:
+    def init(self, get_queue: Queue, res_queue: Queue, commit_queue: Queue) -> None:
 
         Base.cur_get_queue = get_queue
         Base.cur_res_queue = res_queue
+        Base.cur_commit_queue = commit_queue
 
         while True:
 
             start_time: float  = time.time()
 
             self._step(self.__cur_chrome, self)
+
+            print(Base.color('Step diff', 'UNDERLINE'),
+                Base.color(round(time.time() - start_time, 2), 'FAIL'))
 
             if time.time() - start_time < 8.88:
                 time.sleep(8.88 - (time.time() - start_time))
@@ -99,10 +103,23 @@ class Step3Process(Base):
             self.__parse()
         except selenium.common.exceptions.TimeoutException as e:
             if str(e) != 'Message: timeout: Timed out receiving message from renderer: 300.000':
+                self.__del_freez()
                 raise
             print('TimeoutException (renderer). Reload...')
             self.__drv.get(url)
             self.__parse()
+
+    def __del_freez(self) -> None:
+
+        Base.cur_commit_queue.put({
+            'method': 'commit_del_freez',
+            'inst': self,
+            'args': tuple(),
+        })
+
+    def commit_del_freez(self) -> None:
+        
+        self.__del_freez_base()
 
     def __kill_drv(self) -> None:
 
@@ -130,6 +147,7 @@ class Step3Process(Base):
             print('HTML begin:')
             print(self.__drv.find_element(By.CSS_SELECTOR, 'html').get_attribute('innerHTML'))
             print('HTML end.')
+            self.__del_freez()
             raise Exception('Error type 1')
 
         if not is_no_lock and not is_lock:
@@ -171,6 +189,7 @@ class Step3Process(Base):
                 self.__drv.find_element(
                     By.XPATH, f"//p[starts-with(text(),'{text}')]")
                 print('Chrome err...')
+                self.__del_freez()
                 return
             except NoSuchElementException:
                 pass
@@ -213,24 +232,39 @@ class Step3Process(Base):
                     print('HTML begin:')
                     print(self.__drv.find_element(By.CSS_SELECTOR, 'html').get_attribute('innerHTML'))
                     print('HTML end.')
+                    self.__del_freez()
                     raise Exception('Error type 3.3')
+                self.__del_freez()
                 print('JS err...')
                 return
             except NoSuchElementException:
                 print('HTML begin:')
                 print(self.__drv.find_element(By.CSS_SELECTOR, 'html').get_attribute('innerHTML'))
                 print('HTML end.')
+                self.__del_freez()
                 raise Exception('Error type 2')
 
         self.__set_res(is_lock)
 
+    def __del_freez_base(self):
+        
+        Step3FreezingElements.objects.filter(pk=self.__cur_item.pk).delete()
+
     def __set_res(self, is_bad: bool):
+
+        Base.cur_commit_queue.put({
+            'method': 'commit_set_res',
+            'inst': self,
+            'args': (is_bad,),
+        })
+
+    def commit_set_res(self, is_bad: bool):
 
         to_cat_id: int = self.__BAD_CAT_ID if is_bad else self.__GOOD_CAT_ID
         self.__cur_item.sections.add(to_cat_id)
         self.__cur_item.step3_parsed = True
         self.__cur_item.save()
-        Step3FreezingElements.objects.filter(pk=self.__cur_item.pk).delete()
+        self.__del_freez()
         if self.__GOOD_CAT_ID == to_cat_id:
             print(Base.color('GOOD!!!', 'WARNING'))
         else:

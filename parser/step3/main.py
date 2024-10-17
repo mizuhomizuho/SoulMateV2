@@ -23,7 +23,7 @@ class Step3(Base):
         # 'chrome_mts_6227': {'inst': Step3Process},
         # 'chrome_mts_6209': {'inst': Step3Process},
         # 'chrome_mts_6217': {'inst': Step3Process},
-        'chrome_mts_6214': {'inst': Step3Process},
+        # 'chrome_mts_6214': {'inst': Step3Process},
 
         'ListVkCom': {'inst': Step2Process},
         'ListVk24Com': {'inst': Step2Process},
@@ -36,13 +36,15 @@ class Step3(Base):
 
     __get_queue: Queue
     __res_queues: dict[str, Queue]
+    __commit_queue: Queue
 
     def __init__(self):
 
         self.__get_queue = Queue()
         self.__res_queues: dict[str, Queue] = {}
+        self.__commit_queue = Queue()
 
-    def get_els_daemon(self) -> None:
+    def process_queue_daemon(self) -> None:
 
         while True:
 
@@ -53,6 +55,14 @@ class Step3(Base):
                 client['exclude_params'],
                 client['filter_params'],
             ))
+
+    def commit_queue_daemon(self) -> None:
+
+        while True:
+
+            client = self.__commit_queue.get()
+            getattr(client['inst'], client['method'])(*client['args'])
+
 
     def init(self) -> None:
 
@@ -65,12 +75,21 @@ class Step3(Base):
             params = self.__PULL[proc]
             self.__res_queues[proc] = Queue()
             inst = params['inst'](proc)
-            proc = Process(target=inst.init, args=(self.__get_queue, self.__res_queues[proc]))
+            proc = Process(target=inst.init, args=(
+                self.__get_queue,
+                self.__res_queues[proc],
+                self.__commit_queue,
+            ))
+            proc.daemon = True
+            proc.start()
+
+        for i in range(6):
+            proc = Process(target=self.process_queue_daemon)
             proc.daemon = True
             proc.start()
 
         for i in range(3):
-            proc = Process(target=self.get_els_daemon)
+            proc = Process(target=self.commit_queue_daemon)
             proc.daemon = True
             proc.start()
 
