@@ -28,21 +28,11 @@ class Step2Process(Base):
 
     def init(self, get_queue: Queue, res_queue: Queue, commit_queue: Queue) -> None:
 
-        Base.cur_get_queue = get_queue
-        Base.cur_res_queue = res_queue
-        Base.cur_commit_queue = commit_queue
-
-        while True:
-
-            start_time: float  = time.time()
-
-            self._step(self.__cur_class, self)
-
-            print(Base.color('Step diff', 'UNDERLINE'),
-                Base.color(round(time.time() - start_time, 2), 'FAIL'))
-
-            if time.time() - start_time < 8.88:
-                time.sleep(8.88 - (time.time() - start_time))
+        self._init_step(self.__cur_class, {
+            'get_queue': get_queue,
+            'res_queue': res_queue,
+            'commit_queue': commit_queue,
+        })
 
     def set_err(self) -> None:
 

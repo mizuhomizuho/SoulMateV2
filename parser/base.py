@@ -1,9 +1,10 @@
-from __future__ import annotations
+# from __future__ import annotations
+# from typing import TYPE_CHECKING
 import io
 import time
 import traceback
 from multiprocessing import Queue
-from typing import Union, Type
+from typing import Union, Type, Any
 import sys
 import pathlib
 from datetime import datetime
@@ -12,9 +13,7 @@ import sqlparse
 from django import db
 import json
 import pymysql
-from django.db import transaction
 from pymysql.converters import escape_string
-from typing import TYPE_CHECKING
 import os
 import django
 
@@ -25,9 +24,9 @@ django.setup()
 from app_catalog.models import Elements
 from app_main.models import Debug, Step2FreezingElements, Step3FreezingElements
 
-if TYPE_CHECKING:
-    from parser.step3.step2_process import Step2Process
-    from parser.step3.step3_process import Step3Process
+# if TYPE_CHECKING:
+#     from parser.step3.step2_process import Step2Process
+#     from parser.step3.step3_process import Step3Process
 
 class Base:
 
@@ -109,7 +108,29 @@ class Base:
         }
         return f'{colors[key]}{string}{colors['ENDC']}'
 
-    def _step(self, proc_code: str, proc_inst: Union[Step2Process, Step3Process]) -> None:
+    def _init_step(self, proc_code: str, queues: dict[str, Queue]) -> None:
+
+        Base.cur_get_queue = queues['get_queue']
+        Base.cur_res_queue = queues['res_queue']
+        Base.cur_commit_queue = queues['commit_queue']
+
+        while True:
+
+            start_time: float = time.time()
+
+            self.__step(proc_code)
+
+            time_diff = time.time() - start_time
+
+            print(Base.color('Step diff', 'UNDERLINE'),
+                  Base.color(round(time_diff, 2), 'FAIL'))
+
+            if time_diff < 8.88:
+                time.sleep(8.88 - time_diff)
+
+    def __step(self, proc_code: str) -> None:
+
+        proc_inst = self
 
         out = io.StringIO()
         sys.stdout = out
@@ -149,7 +170,9 @@ class Base:
             'filter_params': filter_params,
         })
 
-        return Base.cur_res_queue.get()
+        res = Base.cur_res_queue.get()
+
+        return res
 
     def _get_item_base(self,
         process_code: str,
@@ -158,27 +181,30 @@ class Base:
         filter_params: dict,
     ) -> Union[bool, Elements]:
 
-        item = Elements.objects
+        while True:
 
-        if isinstance(exclude_params, tuple):
-            for excl_el in exclude_params:
-                item = item.exclude(**excl_el)
-        else:
-            item = item.exclude(**exclude_params)
+            item = Elements.objects
 
-        item = item.exclude(pk__in=freezing_model.objects.all()).filter(
-            **filter_params).only('id').order_by('?').first()
+            if isinstance(exclude_params, tuple):
+                for excl_el in exclude_params:
+                    item = item.exclude(**excl_el)
+            else:
+                item = item.exclude(**exclude_params)
 
-        if not item:
-            print(f'The end ({process_code})...')
-            return False
+            item = item.exclude(pk__in=freezing_model.objects.all()).filter(
+                **filter_params).only('id').first()
 
-        try:
+            if not item:
+                print(f'The end ({process_code})...')
+                return False
 
-            freezing_model.objects.create(elements_id=item.pk, process_code=process_code)
-            return Elements.objects.get(pk=item.pk)
+            try:
 
-        except django.db.utils.IntegrityError:
+                freezing_model.objects.create(elements_id=item.pk, process_code=process_code)
+                return Elements.objects.get(pk=item.pk)
 
-            print(f'Isset freezing {process_code} {item.pk}...')
-            return False
+            except django.db.utils.IntegrityError:
+
+                print(f'Isset freezing {process_code} {item.pk}...')
+
+            time.sleep(1)

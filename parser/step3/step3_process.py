@@ -10,6 +10,8 @@ from selenium.webdriver.common.by import By
 from selenium.common import NoSuchElementException
 import pathlib
 import subprocess
+import gc
+import copy
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
@@ -39,21 +41,11 @@ class Step3Process(Base):
 
     def init(self, get_queue: Queue, res_queue: Queue, commit_queue: Queue) -> None:
 
-        Base.cur_get_queue = get_queue
-        Base.cur_res_queue = res_queue
-        Base.cur_commit_queue = commit_queue
-
-        while True:
-
-            start_time: float  = time.time()
-
-            self._step(self.__cur_chrome, self)
-
-            print(Base.color('Step diff', 'UNDERLINE'),
-                Base.color(round(time.time() - start_time, 2), 'FAIL'))
-
-            if time.time() - start_time < 8.88:
-                time.sleep(8.88 - (time.time() - start_time))
+        self._init_step(self.__cur_chrome, {
+            'get_queue': get_queue,
+            'res_queue': res_queue,
+            'commit_queue': commit_queue,
+        })
 
     def set_err(self) -> None:
 
@@ -111,9 +103,10 @@ class Step3Process(Base):
 
     def __del_freez(self) -> None:
 
-        inst = self
+        inst = copy.copy(self)
         try:
             del inst.__drv
+            gc.collect()
         except AttributeError:
             pass
 
@@ -132,6 +125,7 @@ class Step3Process(Base):
         self.__drv.close()
         self.__drv.quit()
         del self.__drv
+        gc.collect()
 
     def __parse(self) -> None:
 
@@ -258,9 +252,10 @@ class Step3Process(Base):
 
     def __set_res(self, is_bad: bool):
 
-        inst = self
+        inst = copy.copy(self)
         try:
             del inst.__drv
+            gc.collect()
         except AttributeError:
             pass
 

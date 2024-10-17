@@ -1,8 +1,11 @@
+from datetime import datetime
 from multiprocessing import Process, Queue
 import pathlib
 import time
 import sys
 from django.db import transaction
+from django import db
+import gc
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
@@ -28,15 +31,17 @@ class Step3(Base):
         'ListVkCom': {'inst': Step2Process},
         'ListVk24Com': {'inst': Step2Process},
         'WennabeCom': {'inst': Step2Process},
-        'LibLiVkCom': {'inst': Step2Process},
-        'InfoPeopleCom': {'inst': Step2Process},
-        'VkstranaRu': {'inst': Step2Process},
-        'Top100vkCom': {'inst': Step2Process},
+        # 'LibLiVkCom': {'inst': Step2Process},
+        # 'InfoPeopleCom': {'inst': Step2Process},
+        # 'VkstranaRu': {'inst': Step2Process},
+        # 'Top100vkCom': {'inst': Step2Process},
     }
 
     __get_queue: Queue
     __res_queues: dict[str, Queue]
     __commit_queue: Queue
+
+    __proc_pull: dict[str, dict]
 
     def __init__(self):
 
@@ -44,20 +49,39 @@ class Step3(Base):
         self.__res_queues: dict[str, Queue] = {}
         self.__commit_queue = Queue()
 
+        self.__proc_pull = {}
+
+    def init_proc(self, proc: str) -> Process:
+
+        params = self.__PULL[proc]
+        self.__res_queues[proc] = Queue()
+        inst = params['inst'](proc)
+        proc = Process(target=inst.init, args=(
+            self.__get_queue,
+            self.__res_queues[proc],
+            self.__commit_queue,
+        ))
+        proc.daemon = True
+        proc.start()
+        return proc
+
     def process_queue_daemon(self) -> None:
 
         while True:
 
             client = self.__get_queue.get()
 
+            db.connections.close_all()
             with transaction.atomic():
-
                 self.__res_queues[client['process_code']].put(self._get_item_base(
                     client['process_code'],
                     client['freezing_model'],
                     client['exclude_params'],
                     client['filter_params'],
                 ))
+            db.connections.close_all()
+            del client
+            gc.collect()
 
     def commit_queue_daemon(self) -> None:
 
@@ -65,9 +89,13 @@ class Step3(Base):
 
             client = self.__commit_queue.get()
 
+            # db.connections.close_all()
             with transaction.atomic():
-
                 getattr(client['inst'], client['method'])(*client['args'])
+            # db.connections.close_all()
+            del client
+            gc.collect()
+
 
     def init(self) -> None:
 
@@ -76,6 +104,12 @@ class Step3(Base):
         Debug.objects.all().delete()
 
         for proc in self.__PULL:
+
+            # self.__proc_pull[f'pull_{proc}'] = {
+            #     'proc': self.init_proc(proc),
+            #     # 'method': self.__init_proc,
+            #     # 'args': (proc,),
+            # }
 
             params = self.__PULL[proc]
             self.__res_queues[proc] = Queue()
@@ -88,13 +122,15 @@ class Step3(Base):
             proc.daemon = True
             proc.start()
 
-        proc = Process(target=self.process_queue_daemon)
-        proc.daemon = True
-        proc.start()
+        for i in range(1):
+            proc = Process(target=self.process_queue_daemon)
+            proc.daemon = True
+            proc.start()
 
-        proc = Process(target=self.commit_queue_daemon)
-        proc.daemon = True
-        proc.start()
+        for i in range(1):
+            proc = Process(target=self.commit_queue_daemon)
+            proc.daemon = True
+            proc.start()
 
         while True:
             time.sleep(8)
