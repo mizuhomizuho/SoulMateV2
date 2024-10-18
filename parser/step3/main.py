@@ -63,10 +63,10 @@ class Step3(Base):
 
             time_diff = time.time() - start_time
             if time_diff > 2:
-                print(Base.color('Sleep 10', 'HEADER'))
+                print(Base.color('Sleep 15', 'HEADER'))
                 time.sleep(15)
-            else:
-                time.sleep(1)
+            # else:
+            #     time.sleep(1)
 
     def commit_queue_daemon(self) -> None:
 
