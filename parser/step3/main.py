@@ -1,6 +1,6 @@
+import time
 from multiprocessing import Process, Queue
 import pathlib
-import time
 import sys
 from django.db import transaction
 
@@ -50,6 +50,8 @@ class Step3(Base):
 
             client = self.__get_queue.get()
 
+            start_time: float = time.time()
+
             with transaction.atomic():
 
                 self.__res_queues[client['process_code']].put(self._get_item_base(
@@ -58,6 +60,11 @@ class Step3(Base):
                     client['exclude_params'],
                     client['filter_params'],
                 ))
+
+            time_diff = time.time() - start_time
+            if time_diff > 2:
+                print(Base.color('Sleep 10', 'HEADER'))
+                time.sleep(10)
 
     def commit_queue_daemon(self) -> None:
 
@@ -80,21 +87,21 @@ class Step3(Base):
             params = self.__PULL[proc]
             self.__res_queues[proc] = Queue()
             inst = params['inst'](proc)
-            proc = Process(target=inst.init, args=(
+            p = Process(target=inst.init, args=(
                 self.__get_queue,
                 self.__res_queues[proc],
                 self.__commit_queue,
             ))
-            proc.daemon = True
-            proc.start()
+            p.daemon = True
+            p.start()
 
-        proc = Process(target=self.process_queue_daemon)
-        proc.daemon = True
-        proc.start()
+        p = Process(target=self.process_queue_daemon)
+        p.daemon = True
+        p.start()
 
-        proc = Process(target=self.commit_queue_daemon)
-        proc.daemon = True
-        proc.start()
+        p = Process(target=self.commit_queue_daemon)
+        p.daemon = True
+        p.start()
 
         while True:
             pass

@@ -25,8 +25,7 @@ from app_catalog.models import Elements
 from app_main.models import Debug, Step2FreezingElements, Step3FreezingElements
 
 # if TYPE_CHECKING:
-#     from parser.step3.step2_process import Step2Process
-#     from parser.step3.step3_process import Step3Process
+#     from parser.step3.main import Step3GetQueue
 
 class Base:
 
@@ -181,7 +180,11 @@ class Base:
         filter_params: dict,
     ) -> Union[bool, Elements]:
 
+        start_time_0: float = time.time()
+
         while True:
+
+            start_time_1: float = time.time()
 
             item = Elements.objects
 
@@ -194,14 +197,28 @@ class Base:
             item = item.exclude(pk__in=freezing_model.objects.all()).filter(
                 **filter_params).only('id').first()
 
+            time_diff_1 = time.time() - start_time_1
+
             if not item:
                 print(f'The end ({process_code})...')
                 return False
 
             try:
 
+                start_time_2: float = time.time()
+
                 freezing_model.objects.create(elements_id=item.pk, process_code=process_code)
-                return Elements.objects.get(pk=item.pk)
+                res = Elements.objects.get(pk=item.pk)
+
+                time_diff_2 = time.time() - start_time_2
+                time_diff_0 = time.time() - start_time_0
+
+                print(Base.color('GET ITEM DIFF', 'OKGREEN'),
+                      Base.color(round(time_diff_0, 2), 'FAIL'),
+                      Base.color(round(time_diff_1, 2), 'FAIL'),
+                      Base.color(round(time_diff_2, 2), 'FAIL'))
+
+                return res
 
             except django.db.utils.IntegrityError:
 

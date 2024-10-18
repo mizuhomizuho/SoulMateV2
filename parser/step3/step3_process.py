@@ -16,8 +16,8 @@ import copy
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
 
-from parser.base import Base
 from cfg import CFG
+from parser.base import Base
 from app_catalog.models import Elements
 from app_main.models import Step3FreezingElements
 
