@@ -1,3 +1,5 @@
+import os
+import subprocess
 import time
 from multiprocessing import Process, Queue
 import pathlib
@@ -7,6 +9,7 @@ from django.db import transaction
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
 
+from cfg import CFG
 from parser.base import Base
 from parser.step3.step2_process import Step2Process
 from parser.step3.step3_process import Step3Process
@@ -79,6 +82,10 @@ class Step3(Base):
                 getattr(client['inst'], client['method'])(*client['args'])
 
     def init(self) -> None:
+
+        connection = subprocess.Popen(
+            f'plink.exe -ssh root@{CFG['srv']['ip']} -L 3307:localhost:3306 -pw {CFG['srv']['pass']}',
+            shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         Step2FreezingElements.objects.all().delete()
         Step3FreezingElements.objects.all().delete()
