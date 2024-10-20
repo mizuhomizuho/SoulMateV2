@@ -13,7 +13,8 @@ from cfg import CFG
 from parser.base import Base
 from parser.step3.step2_process import Step2Process
 from parser.step3.step3_process import Step3Process
-from app_main.models import Step2FreezingElements, Step3FreezingElements, Debug
+from app_main.models import Step2FreezingElements, Step3FreezingElements, Debug, Options
+
 
 class Step3(Base):
 
@@ -80,6 +81,10 @@ class Step3(Base):
             with transaction.atomic():
 
                 getattr(client['inst'], client['method'])(*client['args'])
+
+                la_el: Options = Options.objects.get(code='last_action')
+                la_el.value = time.time()
+                la_el.save()
 
     def init(self) -> None:
 
