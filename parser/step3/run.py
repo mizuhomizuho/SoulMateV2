@@ -4,6 +4,7 @@ import pathlib
 import sys
 import time
 from datetime import datetime
+from multiprocessing import Process
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
@@ -26,10 +27,12 @@ class Run(Base):
 
     def __set_time(self) -> None:
 
+        self.__last_time = time.time()
+
         try:
-            Options.objects.filter(code='last_action').update(value=time.time())
+            Options.objects.filter(code='last_action').update(value=self.__last_time)
         except django.db.utils.OperationalError:
-            self.__last_time = time.time()
+            pass
 
     def init(self) -> None:
 

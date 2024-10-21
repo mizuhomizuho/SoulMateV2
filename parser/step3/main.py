@@ -73,8 +73,6 @@ class Step3(Base):
             if time_diff > 2:
                 print(Base.color('Sleep 15', 'HEADER'))
                 time.sleep(15)
-            # else:
-            #     time.sleep(1)
 
     def commit_queue_daemon(self) -> None:
 
@@ -137,7 +135,7 @@ class Step3(Base):
         p.start()
         self.__save_proc_id(p.pid)
 
-        self.__save_proc_id(os.getpid())
+        # self.__save_proc_id(os.getpid())
 
 if __name__ == '__main__':
 
