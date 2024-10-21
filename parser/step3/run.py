@@ -19,7 +19,6 @@ class Run(Base):
     __STEP_TIME: int = 60 * 5
 
     __last_time: float
-    # __sub_p: subprocess.Popen
 
     def __run(self) -> None:
 
@@ -57,7 +56,6 @@ class Run(Base):
             if self.__last_time < time.time() - self.__STEP_TIME:
                 self.__set_time()
                 print('Restart')
-                # self.__sub_p.kill()
                 with codecs.open(self._PROC_IDS_FILE, 'r+', 'utf-8') as f:
                     for pid in f.read().split(','):
                         if pid != '':
