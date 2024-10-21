@@ -98,7 +98,7 @@ class Step3(Base):
             f.write('')
 
         plink_p = subprocess.Popen(
-            f'plink.exe -ssh root@{CFG['srv']['ip']} -L 3307:localhost:3306 -pw {CFG['srv']['pass']}',
+            f'plink.exe -ssh root@{CFG['srv']['ip']} -L 3308:localhost:3306 -pw {CFG['srv']['pass']}',
             shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         self.__save_proc_id(plink_p.pid)
