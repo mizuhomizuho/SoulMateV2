@@ -1,3 +1,4 @@
+import codecs
 import os
 import subprocess
 import time
@@ -82,15 +83,23 @@ class Step3(Base):
 
                 getattr(client['inst'], client['method'])(*client['args'])
 
-                la_el: Options = Options.objects.get(code='last_action')
-                la_el.value = time.time()
-                la_el.save()
+                Options.objects.filter(code='last_action').update(value=time.time())
+
+    def __save_proc_id(self, pid: int) -> None:
+
+        with codecs.open(self._PROC_IDS_FILE, 'a', 'utf-8') as f:
+            f.write(f'{pid},')
 
     def init(self) -> None:
 
-        connection = subprocess.Popen(
+        with codecs.open(self._PROC_IDS_FILE, 'w', 'utf-8') as f:
+            f.write('')
+
+        plink_p = subprocess.Popen(
             f'plink.exe -ssh root@{CFG['srv']['ip']} -L 3307:localhost:3306 -pw {CFG['srv']['pass']}',
             shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        self.__save_proc_id(plink_p.pid)
 
         Step2FreezingElements.objects.all().delete()
         Step3FreezingElements.objects.all().delete()
@@ -108,14 +117,19 @@ class Step3(Base):
             ))
             p.daemon = True
             p.start()
+            self.__save_proc_id(p.pid)
 
         p = Process(target=self.process_queue_daemon)
         p.daemon = True
         p.start()
+        self.__save_proc_id(p.pid)
 
         p = Process(target=self.commit_queue_daemon)
         p.daemon = True
         p.start()
+        self.__save_proc_id(p.pid)
+
+        self.__save_proc_id(os.getpid())
 
         while True:
             pass

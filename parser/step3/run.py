@@ -1,3 +1,5 @@
+import codecs
+import os
 import pathlib
 import subprocess
 import sys
@@ -16,28 +18,36 @@ class Run(Base):
     __STEP_TIME: int = 60 * 5
 
     __last_time: float
+    __sub_p: subprocess.Popen
 
-    def __run(self):
+    def __run(self) -> None:
 
         self.__last_time = time.time()
 
         base = f'{pathlib.Path(__file__).parent.resolve()}/../..'
         cmd = (fr"cd {base} && .venv\Scripts\activate && py parser/step3/main.py")
 
-        sub_p = subprocess.Popen(cmd, shell = True, stdin = subprocess.PIPE,
-              stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        self.__sub_p = subprocess.Popen(cmd, shell = True, stdin = subprocess.PIPE,
+              stdout = subprocess.PIPE, stderr = subprocess.PIPE, text=True)
 
         time.sleep(self.__STEP_TIME)
 
-        return sub_p
-
     def init(self) -> None:
 
-        connection = self.__run()
+        self.__run()
 
         while True:
 
             print(datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+
+            try:
+                while True:
+                    line = self.__sub_p.stdout.readline()
+                    print(line)
+                    if not line:
+                        break
+            except AttributeError:
+                pass
 
             try:
                 la_el: Options = Options.objects.get(code='last_action')
@@ -47,8 +57,18 @@ class Run(Base):
 
             if self.__last_time < time.time() - self.__STEP_TIME:
                 print('Restart')
-                connection.kill()
-                connection = self.__run()
+                self.__sub_p.kill()
+                with codecs.open(self._PROC_IDS_FILE, 'r+', 'utf-8') as f:
+                    for pid in ','.split(f.read()):
+                        if pid != '':
+                            os.system(f'Taskkill /F /PID {pid}')
+                            print(f'Taskkill {pid}')
+                    f.write('')
+                # os.system('Taskkill /IM python.exe /F')
+                # os.system('Taskkill /IM plink.exe /F')
+                os.system('Taskkill /IM chromedriver.exe /F')
+                print('Taskkill chromedriver')
+                self.__run()
 
             time.sleep(2)
 

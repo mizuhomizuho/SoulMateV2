@@ -2,5 +2,6 @@
 .idea
 **/__pycache__/
 parser/step3/proxy_auth_plugin_*.zip
+parser/proc_ids
 test.py
 test2.py

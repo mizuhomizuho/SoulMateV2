@@ -35,6 +35,8 @@ class Base:
 
     __DEBUG_FILE: str = f'{pathlib.Path(__file__).parent.resolve()}/log/debug.json'
 
+    _PROC_IDS_FILE: str = f'{pathlib.Path(__file__).parent.resolve()}/proc_ids'
+
     __returned_sql: list = []
 
     def _print_common_exception(self, ex: Exception) -> None:
