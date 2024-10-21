@@ -39,12 +39,11 @@ class Run(Base):
             except django.db.utils.OperationalError:
                 pass
 
-            if self.__last_time < time.time() - 60 * 2:
-                self.__last_time = time.time()
+            if self.__last_time < time.time() - 60 * 5:
                 print('Restart')
                 connection.kill()
-                time.sleep(15)
                 connection = self.__run()
+                time.sleep(60 * 5)
 
             time.sleep(2)
 
