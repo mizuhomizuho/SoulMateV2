@@ -13,6 +13,8 @@ from app_main.models import Options
 
 class Run(Base):
 
+    __STEP_TIME: int = 60 * 5
+
     __last_time: float
 
     def __run(self):
@@ -22,8 +24,12 @@ class Run(Base):
         base = f'{pathlib.Path(__file__).parent.resolve()}/../..'
         cmd = (fr"cd {base} && .venv\Scripts\activate && py parser/step3/main.py")
 
-        return subprocess.Popen(cmd, shell = True, stdin = subprocess.PIPE,
+        sub_p = subprocess.Popen(cmd, shell = True, stdin = subprocess.PIPE,
               stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+
+        time.sleep(self.__STEP_TIME)
+
+        return sub_p
 
     def init(self) -> None:
 
@@ -39,11 +45,10 @@ class Run(Base):
             except django.db.utils.OperationalError:
                 pass
 
-            if self.__last_time < time.time() - 60 * 5:
+            if self.__last_time < time.time() - self.__STEP_TIME:
                 print('Restart')
                 connection.kill()
                 connection = self.__run()
-                time.sleep(60 * 5)
 
             time.sleep(2)
 
