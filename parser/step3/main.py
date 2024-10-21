@@ -89,12 +89,12 @@ class Step3(Base):
 
     def __save_proc_id(self, pid: int) -> None:
 
-        with codecs.open(self._PROC_IDS_FILE, 'a', 'utf-8') as f:
+        with codecs.open(self._S3_PROC_IDS_FILE, 'a', 'utf-8') as f:
             f.write(f'{pid},')
 
     def init(self) -> None:
 
-        with codecs.open(self._PROC_IDS_FILE, 'w', 'utf-8') as f:
+        with codecs.open(self._S3_PROC_IDS_FILE, 'w', 'utf-8') as f:
             f.write('')
 
         plink_p = subprocess.Popen(

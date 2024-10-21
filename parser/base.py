@@ -35,7 +35,7 @@ class Base:
 
     __DEBUG_FILE: str = f'{pathlib.Path(__file__).parent.resolve()}/log/debug.json'
 
-    _PROC_IDS_FILE: str = f'{pathlib.Path(__file__).parent.resolve()}/proc_ids'
+    _S3_PROC_IDS_FILE: str = f'{pathlib.Path(__file__).parent.resolve()}/step3/proc_ids.txt'
 
     __returned_sql: list = []
 

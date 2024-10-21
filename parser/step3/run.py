@@ -55,7 +55,7 @@ class Run(Base):
             if self.__last_time < time.time() - self.__STEP_TIME:
                 self.__set_time()
                 print('Restart')
-                with codecs.open(self._PROC_IDS_FILE, 'r+', 'utf-8') as f:
+                with codecs.open(self._S3_PROC_IDS_FILE, 'r+', 'utf-8') as f:
                     for pid in f.read().split(','):
                         if pid != '':
                             os.system(f'Taskkill /F /PID {pid}')
