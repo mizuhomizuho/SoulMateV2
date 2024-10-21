@@ -4,7 +4,6 @@ import pathlib
 import sys
 import time
 from datetime import datetime
-from multiprocessing import Process
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
