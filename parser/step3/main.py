@@ -5,6 +5,7 @@ import time
 from multiprocessing import Process, Queue
 import pathlib
 import sys
+import django
 from django.db import transaction
 
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
@@ -57,14 +58,16 @@ class Step3(Base):
 
             start_time: float = time.time()
 
-            with transaction.atomic():
-
-                self.__res_queues[client['process_code']].put(self._get_item_base(
-                    client['process_code'],
-                    client['freezing_model'],
-                    client['exclude_params'],
-                    client['filter_params'],
-                ))
+            try:
+                with transaction.atomic():
+                    self.__res_queues[client['process_code']].put(self._get_item_base(
+                        client['process_code'],
+                        client['freezing_model'],
+                        client['exclude_params'],
+                        client['filter_params'],
+                    ))
+            except django.db.utils.OperationalError as e:
+                print(Base.color(e, 'OKBLUE'))
 
             time_diff = time.time() - start_time
             if time_diff > 2:
@@ -79,11 +82,12 @@ class Step3(Base):
 
             client = self.__commit_queue.get()
 
-            with transaction.atomic():
-
-                getattr(client['inst'], client['method'])(*client['args'])
-
-                Options.objects.filter(code='last_action').update(value=time.time())
+            try:
+                with transaction.atomic():
+                    getattr(client['inst'], client['method'])(*client['args'])
+                    Options.objects.filter(code='last_action').update(value=time.time())
+            except django.db.utils.OperationalError as e:
+                print(Base.color(e, 'OKBLUE'))
 
     def __save_proc_id(self, pid: int) -> None:
 
@@ -101,9 +105,13 @@ class Step3(Base):
 
         self.__save_proc_id(plink_p.pid)
 
-        Step2FreezingElements.objects.all().delete()
-        Step3FreezingElements.objects.all().delete()
-        Debug.objects.all().delete()
+        try:
+            with transaction.atomic():
+                Step2FreezingElements.objects.all().delete()
+                Step3FreezingElements.objects.all().delete()
+                Debug.objects.all().delete()
+        except django.db.utils.OperationalError as e:
+            print(Base.color(e, 'OKBLUE'))
 
         for proc in self.__PULL:
 
@@ -131,9 +139,9 @@ class Step3(Base):
 
         self.__save_proc_id(os.getpid())
 
-        while True:
-            pass
-
 if __name__ == '__main__':
 
     Step3().init()
+
+    while True:
+        pass
