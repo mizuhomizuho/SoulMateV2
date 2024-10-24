@@ -263,6 +263,7 @@ class Step3Process(Base):
             'method': 'commit_set_res',
             'inst': inst,
             'args': (is_bad,),
+            'cur_chrome': self.__cur_chrome,
         })
 
     def commit_set_res(self, is_bad: bool):

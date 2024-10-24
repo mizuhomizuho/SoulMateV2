@@ -1,4 +1,5 @@
 import codecs
+import io
 import os
 import subprocess
 import time
@@ -17,27 +18,26 @@ from parser.step3.step2_process import Step2Process
 from parser.step3.step3_process import Step3Process
 from app_main.models import Step2FreezingElements, Step3FreezingElements, Debug, Options
 
-
 class Step3(Base):
 
     __PULL: dict[str, dict] = {
 
-        # 'chrome_3': {'inst': Step3Process},
+        'chrome_3': {'inst': Step3Process},
         # 'chrome_my_vk': {'inst': Step3Process},
-        # 'chrome_megafon_6114': {'inst': Step3Process},
-        # 'chrome_mts_6192': {'inst': Step3Process},
-        # 'chrome_mts_6227': {'inst': Step3Process},
-        # 'chrome_mts_6209': {'inst': Step3Process},
-        # 'chrome_mts_6217': {'inst': Step3Process},
+        'chrome_megafon_6114': {'inst': Step3Process},
+        'chrome_mts_6192': {'inst': Step3Process},
+        'chrome_mts_6227': {'inst': Step3Process},
+        'chrome_mts_6209': {'inst': Step3Process},
+        'chrome_mts_6217': {'inst': Step3Process},
         'chrome_mts_6214': {'inst': Step3Process},
 
-        'ListVkCom': {'inst': Step2Process},
-        'ListVk24Com': {'inst': Step2Process},
-        'WennabeCom': {'inst': Step2Process},
-        'LibLiVkCom': {'inst': Step2Process},
-        'InfoPeopleCom': {'inst': Step2Process},
-        'VkstranaRu': {'inst': Step2Process},
-        'Top100vkCom': {'inst': Step2Process},
+        # 'ListVkCom': {'inst': Step2Process},
+        # 'ListVk24Com': {'inst': Step2Process},
+        # 'WennabeCom': {'inst': Step2Process},
+        # 'LibLiVkCom': {'inst': Step2Process},
+        # 'InfoPeopleCom': {'inst': Step2Process},
+        # 'VkstranaRu': {'inst': Step2Process},
+        # 'Top100vkCom': {'inst': Step2Process},
     }
 
     __get_queue: Queue
@@ -56,7 +56,7 @@ class Step3(Base):
 
             client = self.__get_queue.get()
 
-            start_time: float = time.time()
+            # start_time: float = time.time()
 
             try:
                 with transaction.atomic():
@@ -69,10 +69,10 @@ class Step3(Base):
             except django.db.utils.OperationalError as e:
                 print(Base.color(e, 'OKBLUE'))
 
-            time_diff = time.time() - start_time
-            if time_diff > 2:
-                print(Base.color('Sleep 15', 'HEADER'))
-                time.sleep(15)
+            # time_diff = time.time() - start_time
+            # if time_diff > 2:
+            #     print(Base.color('Sleep 15', 'HEADER'))
+            #     time.sleep(15)
 
     def commit_queue_daemon(self) -> None:
 
@@ -80,12 +80,24 @@ class Step3(Base):
 
             client = self.__commit_queue.get()
 
+            out = io.StringIO()
+            sys.stdout = out
+
             try:
                 with transaction.atomic():
                     getattr(client['inst'], client['method'])(*client['args'])
                     Options.objects.filter(code='last_action').update(value=time.time())
             except django.db.utils.OperationalError as e:
                 print(Base.color(e, 'OKBLUE'))
+
+            sys.stdout = sys.__stdout__
+            if out.getvalue() != '':
+                proc_code = client['inst'].__class__.__name__
+                if 'cur_chrome' in client:
+                    proc_code = client['cur_chrome']
+                step_name_color = self.color(f'{proc_code}:', 'OKCYAN')
+                step_out: str = f'{step_name_color} {f'\n{step_name_color} '.join(out.getvalue().strip().split('\n'))}'
+                print(step_out)
 
     def __save_proc_id(self, pid: int) -> None:
 
