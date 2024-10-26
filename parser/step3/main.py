@@ -109,8 +109,9 @@ class Step3(Base):
         with codecs.open(self._S3_PROC_IDS_FILE, 'w', 'utf-8') as f:
             f.write('')
 
-        plink_p = subprocess.Popen(
-            f'plink.exe -ssh root@{CFG['srv']['ip']} -L 3308:localhost:3306 -pw {CFG['srv']['pass']}',
+        plink_shell = f'plink.exe -ssh root@{CFG['srv']['ip']} -L 3308:localhost:3306 -pw {CFG['srv']['pass']}'
+        print(plink_shell)
+        plink_p = subprocess.Popen(plink_shell,
             shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         self.__save_proc_id(plink_p.pid)
@@ -136,7 +137,6 @@ class Step3(Base):
             p.daemon = True
             p.start()
             self.__save_proc_id(p.pid)
-            time.sleep(1)
 
         p = Process(target=self.process_queue_daemon)
         p.daemon = True

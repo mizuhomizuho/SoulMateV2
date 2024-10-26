@@ -14,6 +14,8 @@ import subprocess
 import gc
 import copy
 
+from selenium.webdriver.remote.webelement import WebElement
+
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../..')
 sys.path.append(f'{pathlib.Path(__file__).parent.resolve()}/../../soul_mate')
 
@@ -111,7 +113,9 @@ class Step3Process(Base):
         print(self.__drv.find_element(By.CSS_SELECTOR, 'html').get_attribute('innerHTML'))
         print('HTML end.')
 
-    def __mktime(self, vk_date: str) -> float:
+    def __mktime(self, vk_date_el: WebElement) -> float:
+
+        vk_date = vk_date_el.get_attribute('textContent')
 
         date_expl: list = vk_date.split(' ')
         if len(date_expl) == 4 and date_expl[2] == 'в':
@@ -120,17 +124,25 @@ class Step3Process(Base):
             date_expl = [date_expl[0], date_expl[1], date_expl[2]]
         if len(date_expl) != 3:
             self.__del_freez()
-            print(date_expl)
-            print(vk_date)
+            print('date_expl', date_expl)
+            print('vk_date', vk_date)
+            print('vk_date_el text:', vk_date_el.text)
+            print('vk_date_el textContent:', vk_date_el.get_attribute('textContent'))
+            print('vk_date_el innerHTML:', vk_date_el.get_attribute('innerHTML'))
             raise Exception('Err 1 !!!')
         mes_arr: dict = {
             'янв': '01', 'фев': '02', 'мар': '03', 'апр': '04', 'мая': '05', 'июн': '06',
             'июл': '07', 'авг': '08', 'сен': '09', 'окт': '10', 'ноя': '11', 'дек': '12',
         }
-        return time.mktime(time.strptime(
-            f'{date_expl[0]}/{mes_arr[date_expl[1]]}/{date_expl[2]}',
-            '%d/%m/%Y'
-        ))
+
+        try:
+            return time.mktime(time.strptime(
+                f'{date_expl[0]}/{mes_arr[date_expl[1]]}/{date_expl[2]}',
+                '%d/%m/%Y'
+            ))
+        except Exception as e:
+            print('Err 9:', date_expl, vk_date, e)
+            raise
 
     def __s4_parse(self) -> None:
 
@@ -143,7 +155,8 @@ class Step3Process(Base):
             except NoSuchElementException:
                 pass
             if while_i >= 10:
-                raise Exception('Err 8 !!!')
+                print('Err 8 !!!')
+                return
             while_i += 1
             time.sleep(1)
 
@@ -174,10 +187,13 @@ class Step3Process(Base):
         except NoSuchElementException:
             pass
 
-        last_post_date_el = self.__drv.find_element(
-            By.CSS_SELECTOR, '#page_wall_posts .PostHeaderSubtitle__item')
-
-        last_post_time = self.__mktime(last_post_date_el.text)
+        last_post_time: float | None = None
+        try:
+            last_post_date_el = self.__drv.find_element(
+                By.CSS_SELECTOR, '#page_wall_posts .PostHeaderSubtitle__item')
+            last_post_time = self.__mktime(last_post_date_el)
+        except NoSuchElementException:
+            pass
 
         last_photo_el = None
 
@@ -186,11 +202,12 @@ class Step3Process(Base):
                 By.CSS_SELECTOR, '.vkuiTabs__in .vkuiTabsItem--selected[href^="/photos"]')
             last_photos_els = self.__drv.find_elements(
                 By.CSS_SELECTOR, '.OwnerContentTabPhotos__items .OwnerContentTabPhotosItem[href^="/photo"]')
-            if 1 < len(last_photos_els) < 6:
+            if len(last_photos_els) > 6:
                 self.__del_freez()
                 print('Len', len(last_photos_els))
                 raise Exception('Err 2 !!!')
-            last_photo_el = last_photos_els[0]
+            if len(last_photos_els):
+                last_photo_el = last_photos_els[0]
         except NoSuchElementException:
             pass
 
@@ -203,7 +220,7 @@ class Step3Process(Base):
                 try:
                     rel_date_el = self.__drv.find_element(
                         By.CSS_SELECTOR, '#pv_narrow_column_wrap #pv_date_info .rel_date')
-                    last_photo_time = self.__mktime(rel_date_el.text)
+                    last_photo_time = self.__mktime(rel_date_el)
                     break
                 except NoSuchElementException:
                     pass
@@ -213,40 +230,55 @@ class Step3Process(Base):
                 time.sleep(1)
 
         if last_photo_time is None:
-            tab_btn_el = self.__drv.find_element(
-                By.CSS_SELECTOR, '.vkuiTabs__in .vkuiTabsItem[href^="/photos"]:not(.vkuiTabsItem--selected)')
-            tab_btn_el.click()
-            break_2: bool = False
-            while_i: int = 0
-            while True:
-                try:
-                    last_photo_el = self.__drv.find_element(
-                        By.CSS_SELECTOR, '.OwnerContentTabPhotos__items .OwnerContentTabPhotosItem[href^="/photo"]')
-                    last_photo_el.click()
-                    while2_i: int = 0
-                    while True:
-                        try:
-                            rel_date_el = self.__drv.find_element(
-                                By.CSS_SELECTOR, '#pv_narrow_column_wrap #pv_date_info .rel_date')
-                            last_photo_time = self.__mktime(rel_date_el.text)
-                            break_2 = True
-                            break
-                        except NoSuchElementException:
-                            pass
-                        if while2_i >= 10:
-                            raise Exception('Err 5 !!!')
-                        while2_i += 1
-                        time.sleep(1)
-                except NoSuchElementException:
-                    pass
-                if break_2:
-                    break
-                if while_i >= 10:
-                    raise Exception('Err 4 !!!')
-                while_i += 1
-                time.sleep(1)
+            tab_btn_el: WebElement | None = None
+            try:
+                tab_btn_el = self.__drv.find_element(By.CSS_SELECTOR,
+                '.vkuiTabs__in .vkuiTabsItem[href^="/photos"]:not(.vkuiTabsItem--selected)')
+            except NoSuchElementException:
+                pass
+            if tab_btn_el is not None:
+                tab_btn_el.click()
+                break_2: bool = False
+                while_i: int = 0
+                while True:
+                    try:
+                        last_photo_el = self.__drv.find_element(
+                            By.CSS_SELECTOR, '.OwnerContentTabPhotos__items .OwnerContentTabPhotosItem[href^="/photo"]')
+                        last_photo_el.click()
+                        while2_i: int = 0
+                        while True:
+                            try:
+                                rel_date_el = self.__drv.find_element(
+                                    By.CSS_SELECTOR, '#pv_narrow_column_wrap #pv_date_info .rel_date')
+                                last_photo_time = self.__mktime(rel_date_el)
+                                break_2 = True
+                                break
+                            except NoSuchElementException:
+                                pass
+                            if while2_i >= 10:
+                                raise Exception('Err 5 !!!')
+                            while2_i += 1
+                            time.sleep(1)
+                    except NoSuchElementException:
+                        pass
+                    if break_2:
+                        break
+                    if while_i >= 10:
+                        print('Err 4 !!!')
+                        break
+                    while_i += 1
+                    time.sleep(1)
 
-        last_active_time = last_photo_time if last_photo_time > last_post_time else last_post_time
+        if last_post_time is None and last_photo_time is None:
+            self.__set_s4_res(0)
+            return
+
+        if last_post_time is None:
+            last_active_time = last_photo_time
+        elif last_photo_time is None:
+            last_active_time = last_post_time
+        else:
+            last_active_time = last_photo_time if last_photo_time > last_post_time else last_post_time
 
         self.__set_s4_res(last_active_time)
 
@@ -421,7 +453,7 @@ class Step3Process(Base):
 
     def commit_set_s4_res(self, last_active: float):
 
-        self.__cur_item.time_last__active = datetime.fromtimestamp(last_active, dt.UTC)
+        self.__cur_item.time_last_active = datetime.fromtimestamp(last_active, dt.UTC)
         self.__cur_item.save()
         self.__del_freez_base()
         print(Base.color('Last active:', 'WARNING'),
@@ -461,8 +493,12 @@ class Step3Process(Base):
             self.__cur_item = self._get_item(
                 self.__cur_chrome,
                 Step3FreezingElements,
-                {'time_last_active__isnull': False},
-                {'step3_good': True, 'age__gte': 26, 'age__lte': 26, 'age__isnull': False},
+                tuple(),
+                {
+                    'step3_good': True,
+                    'age': 26,
+                    'time_last_active__isnull': True
+                },
             )
         else:
             self.__cur_item = self._get_item(

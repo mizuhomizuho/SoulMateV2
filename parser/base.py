@@ -163,7 +163,7 @@ class Base:
         process_code: str,
         freezing_model: Union[Type[Step2FreezingElements], Type[Step3FreezingElements]],
         exclude_params: dict | tuple,
-        filter_params: dict,
+        filter_params: dict | tuple,
     ) -> Union[bool, Elements]:
 
         Base.cur_get_queue.put({
@@ -181,7 +181,7 @@ class Base:
         process_code: str,
         freezing_model: Union[Type[Step2FreezingElements], Type[Step3FreezingElements]],
         exclude_params: dict | tuple,
-        filter_params: dict,
+        filter_params: dict | tuple,
     ) -> Union[bool, Elements]:
 
         start_time_0: float = time.time()
@@ -198,8 +198,13 @@ class Base:
             else:
                 item = item.exclude(**exclude_params)
 
-            item = item.exclude(pk__in=freezing_model.objects.all()).filter(
-                **filter_params).only('id').first()
+            if isinstance(filter_params, tuple):
+                for filter_el in filter_params:
+                    item = item.filter(**filter_el)
+            else:
+                item = item.filter(**filter_params)
+
+            item = item.exclude(pk__in=freezing_model.objects.all()).only('id').first()
 
             time_diff_1 = time.time() - start_time_1
 

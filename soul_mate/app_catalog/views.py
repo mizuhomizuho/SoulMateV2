@@ -1,3 +1,5 @@
+import time
+from datetime import datetime
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
@@ -25,25 +27,23 @@ class Views:
         return HttpResponse(json.dumps(res_dict))
 
     def section(self, request, section_code, section_path=None):
+
         section_el = get_object_or_404(Sections, code=section_code)
 
-        els_filter: dict[str, Sections | int | bool] = {
-            'sections': section_el,
-        }
-
         if section_code == 's3-good':
-            els_filter['age__gte'] = self.__CUR_AGE
-            els_filter['age__lte'] = self.__CUR_AGE
-            els_filter['age__isnull'] = False
-
-        els = Elements.objects.filter(**els_filter)
-
-        if section_code == 's3-good':
+            els = Elements.objects.filter(
+                step3_good=True,
+                time_last_active__gte=datetime.fromtimestamp(time.mktime(time.strptime(
+                '1/10/2024', '%d/%m/%Y'))).strftime('%Y-%m-%d %H:%M:%S'),
+                age=self.__CUR_AGE,
+            )
             els = els.exclude(sections__id__in=(
                 getattr(self, f'_{type(self).__qualname__}__S4_RES_CAT_ID_{self.__CUR_AGE}_YES'),
                 getattr(self, f'_{type(self).__qualname__}__S4_RES_CAT_ID_{self.__CUR_AGE}_NO'),
                 getattr(self, f'_{type(self).__qualname__}__S4_RES_CAT_ID_{self.__CUR_AGE}_MB'),
             ))
+        else:
+            els = Elements.objects.filter(sections=section_el)
 
         pager = Paginator(
             els.prefetch_related('sections'), 18

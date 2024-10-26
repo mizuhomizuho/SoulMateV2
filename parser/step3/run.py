@@ -15,7 +15,7 @@ from parser.step3.main import Step3
 
 class Run(Base):
 
-    __STEP_TIME: int = 60 * 5
+    __STEP_TIME: int = 60 * 2
 
     __last_time: float
 
