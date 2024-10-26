@@ -5,6 +5,7 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium import webdriver
 import sys
 import zipfile
+import datetime as dt
 from datetime import datetime
 from selenium.webdriver.common.by import By
 from selenium.common import NoSuchElementException
@@ -101,6 +102,154 @@ class Step3Process(Base):
             self.__drv.get(url)
             self.__parse()
 
+    def __print_err(self, el = None):
+
+        if not el is None:
+            print('textContent:', el.get_attribute('textContent'))
+            print('innerHTML:', el.get_attribute('innerHTML'))
+        print('HTML begin:')
+        print(self.__drv.find_element(By.CSS_SELECTOR, 'html').get_attribute('innerHTML'))
+        print('HTML end.')
+
+    def __mktime(self, vk_date: str) -> float:
+
+        date_expl: list = vk_date.split(' ')
+        if len(date_expl) == 4 and date_expl[2] == 'в':
+            date_expl = [date_expl[0], date_expl[1], datetime.now().strftime('%Y')]
+        if len(date_expl) == 5 and date_expl[3] == 'в':
+            date_expl = [date_expl[0], date_expl[1], date_expl[2]]
+        if len(date_expl) != 3:
+            self.__del_freez()
+            print(date_expl)
+            print(vk_date)
+            raise Exception('Err 1 !!!')
+        mes_arr: dict = {
+            'янв': '01', 'фев': '02', 'мар': '03', 'апр': '04', 'мая': '05', 'июн': '06',
+            'июл': '07', 'авг': '08', 'сен': '09', 'окт': '10', 'ноя': '11', 'дек': '12',
+        }
+        return time.mktime(time.strptime(
+            f'{date_expl[0]}/{mes_arr[date_expl[1]]}/{date_expl[2]}',
+            '%d/%m/%Y'
+        ))
+
+    def __s4_parse(self) -> None:
+
+        while_i: int = 0
+        while True:
+            try:
+                self.__drv.find_element(
+                    By.CSS_SELECTOR, '#react_rootprofile .ProfileHeader .OwnerPageAvatar')
+                break
+            except NoSuchElementException:
+                pass
+            if while_i >= 10:
+                raise Exception('Err 8 !!!')
+            while_i += 1
+            time.sleep(1)
+
+        try:
+            last_seen_el = self.__drv.find_element(
+                By.CSS_SELECTOR, '#react_rootprofile .ProfileIndicatorBadge__badgeLastSeen')
+            last_seen_expl = last_seen_el.text.split(' ')
+            if len(last_seen_expl) != 2:
+                self.__del_freez()
+                print('Len', len(last_seen_expl))
+                raise Exception('Err 6 !!!')
+            if last_seen_expl[1] == 'мес':
+                last_seen_time = time.time() - 3600 * 24 * 31 * int(last_seen_expl[0])
+            elif last_seen_expl[1] == 'н':
+                last_seen_time = time.time() - 3600 * 24 * 7 * int(last_seen_expl[0])
+            elif last_seen_expl[1] == 'дн':
+                last_seen_time = time.time() - 3600 * 24 * int(last_seen_expl[0])
+            elif last_seen_expl[1] == 'ч':
+                last_seen_time = time.time() - 3600 * int(last_seen_expl[0])
+            elif last_seen_expl[1] == 'мин':
+                last_seen_time = time.time() - 60 * int(last_seen_expl[0])
+            else:
+                self.__del_freez()
+                print(last_seen_expl)
+                raise Exception('Err 7 !!!')
+            self.__set_s4_res(last_seen_time)
+            return
+        except NoSuchElementException:
+            pass
+
+        last_post_date_el = self.__drv.find_element(
+            By.CSS_SELECTOR, '#page_wall_posts .PostHeaderSubtitle__item')
+
+        last_post_time = self.__mktime(last_post_date_el.text)
+
+        last_photo_el = None
+
+        try:
+            self.__drv.find_element(
+                By.CSS_SELECTOR, '.vkuiTabs__in .vkuiTabsItem--selected[href^="/photos"]')
+            last_photos_els = self.__drv.find_elements(
+                By.CSS_SELECTOR, '.OwnerContentTabPhotos__items .OwnerContentTabPhotosItem[href^="/photo"]')
+            if 1 < len(last_photos_els) < 6:
+                self.__del_freez()
+                print('Len', len(last_photos_els))
+                raise Exception('Err 2 !!!')
+            last_photo_el = last_photos_els[0]
+        except NoSuchElementException:
+            pass
+
+        last_photo_time: float | None = None
+
+        if not last_photo_el is None:
+            last_photo_el.click()
+            while_i: int = 0
+            while True:
+                try:
+                    rel_date_el = self.__drv.find_element(
+                        By.CSS_SELECTOR, '#pv_narrow_column_wrap #pv_date_info .rel_date')
+                    last_photo_time = self.__mktime(rel_date_el.text)
+                    break
+                except NoSuchElementException:
+                    pass
+                if while_i >= 10:
+                    raise Exception('Err 3 !!!')
+                while_i += 1
+                time.sleep(1)
+
+        if last_photo_time is None:
+            tab_btn_el = self.__drv.find_element(
+                By.CSS_SELECTOR, '.vkuiTabs__in .vkuiTabsItem[href^="/photos"]:not(.vkuiTabsItem--selected)')
+            tab_btn_el.click()
+            break_2: bool = False
+            while_i: int = 0
+            while True:
+                try:
+                    last_photo_el = self.__drv.find_element(
+                        By.CSS_SELECTOR, '.OwnerContentTabPhotos__items .OwnerContentTabPhotosItem[href^="/photo"]')
+                    last_photo_el.click()
+                    while2_i: int = 0
+                    while True:
+                        try:
+                            rel_date_el = self.__drv.find_element(
+                                By.CSS_SELECTOR, '#pv_narrow_column_wrap #pv_date_info .rel_date')
+                            last_photo_time = self.__mktime(rel_date_el.text)
+                            break_2 = True
+                            break
+                        except NoSuchElementException:
+                            pass
+                        if while2_i >= 10:
+                            raise Exception('Err 5 !!!')
+                        while2_i += 1
+                        time.sleep(1)
+                except NoSuchElementException:
+                    pass
+                if break_2:
+                    break
+                if while_i >= 10:
+                    raise Exception('Err 4 !!!')
+                while_i += 1
+                time.sleep(1)
+
+        last_active_time = last_photo_time if last_photo_time > last_post_time else last_post_time
+
+        self.__set_s4_res(last_active_time)
+
     def __del_freez(self) -> None:
 
         inst = copy.copy(self)
@@ -128,6 +277,10 @@ class Step3Process(Base):
         gc.collect()
 
     def __parse(self) -> None:
+
+        if self._IS_STEP4:
+            self.__s4_parse()
+            return
 
         is_no_lock: bool = True
         try:
@@ -250,6 +403,30 @@ class Step3Process(Base):
         
         Step3FreezingElements.objects.filter(pk=self.__cur_item.pk).delete()
 
+    def __set_s4_res(self, last_active: float):
+
+        inst = copy.copy(self)
+        try:
+            del inst.__drv
+            gc.collect()
+        except AttributeError:
+            pass
+
+        Base.cur_commit_queue.put({
+            'method': 'commit_set_s4_res',
+            'inst': inst,
+            'args': (last_active,),
+            'cur_chrome': self.__cur_chrome,
+        })
+
+    def commit_set_s4_res(self, last_active: float):
+
+        self.__cur_item.time_last__active = datetime.fromtimestamp(last_active, dt.UTC)
+        self.__cur_item.save()
+        self.__del_freez_base()
+        print(Base.color('Last active:', 'WARNING'),
+              datetime.fromtimestamp(last_active).strftime('%Y-%m-%d %H:%M:%S'))
+
     def __set_res(self, is_bad: bool):
 
         inst = copy.copy(self)
@@ -280,12 +457,20 @@ class Step3Process(Base):
 
     def __set_item(self) -> bool:
 
-        self.__cur_item = self._get_item(
-            self.__cur_chrome,
-            Step3FreezingElements,
-            {'step3_parsed': True},
-            {'step2_good': True},
-        )
+        if self._IS_STEP4:
+            self.__cur_item = self._get_item(
+                self.__cur_chrome,
+                Step3FreezingElements,
+                {'time_last_active__isnull': False},
+                {'step3_good': True, 'age__gte': 26, 'age__lte': 26, 'age__isnull': False},
+            )
+        else:
+            self.__cur_item = self._get_item(
+                self.__cur_chrome,
+                Step3FreezingElements,
+                {'step3_parsed': True},
+                {'step2_good': True},
+            )
 
         if not self.__cur_item:
             return False

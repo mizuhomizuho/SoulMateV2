@@ -136,6 +136,7 @@ class Step3(Base):
             p.daemon = True
             p.start()
             self.__save_proc_id(p.pid)
+            time.sleep(1)
 
         p = Process(target=self.process_queue_daemon)
         p.daemon = True

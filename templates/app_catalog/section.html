@@ -11,7 +11,7 @@
                 {% for item in pager.paginator.page_range %}
                     {% if pager.number == item %}
                         <a href="?page={{ item }}" style="color: red">{{ item }}</a>
-                    {% elif item >= pager.number|add:-2 and item <= pager.number|add:2 %}
+                    {% elif item >= pager.number|add:-8 and item <= pager.number|add:8 %}
                         <a href="?page={{ item }}">{{ item }}</a>
                     {% endif %}
                 {% endfor %}
@@ -23,7 +23,7 @@
 
         <div style="display: flex;flex-wrap: wrap;gap: 25px;">
             {% for item in pager %}
-                <table>
+                <table class="js-s4__el-box" data-id="{{ item.pk }}">
                     <tr>
                         <td rowspan="3">
                             <a href="https://vk.com/{{ item.nick }}/" target="_blank">
@@ -31,7 +31,7 @@
                             </a>
                         </td>
                         <td colspan="2">
-                            <input type="button" value="Да" style="width: 100%">
+                            <input type="button" class="js-s4__res-btn" data-act="yes" value="Да" style="width: 100%">
                         </td>
                     </tr>
                     <tr>
@@ -39,12 +39,12 @@
                             {{ item.age }}
                         </td>
                         <td>
-                            <input type="button" value="Нет" style="width: 100%">
+                            <input type="button" class="js-s4__res-btn" data-act="no" value="Нет" style="width: 100%">
                         </td>
                     </tr>
                     <tr>
                         <td colspan="2">
-                            <input type="button" value="Наверное">
+                            <input type="button" class="js-s4__res-btn" data-act="mb" value="Наверное">
                         </td>
                     </tr>
                 </table>
@@ -59,7 +59,7 @@
                 {% for item in pager.paginator.page_range %}
                     {% if pager.number == item %}
                         <a href="?page={{ item }}" style="color: red">{{ item }}</a>
-                    {% elif item >= pager.number|add:-2 and item <= pager.number|add:2 %}
+                    {% elif item >= pager.number|add:-8 and item <= pager.number|add:8 %}
                         <a href="?page={{ item }}">{{ item }}</a>
                     {% endif %}
                 {% endfor %}

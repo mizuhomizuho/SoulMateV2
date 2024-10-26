@@ -29,6 +29,8 @@ from app_main.models import Debug, Step2FreezingElements, Step3FreezingElements
 
 class Base:
 
+    _IS_STEP4: bool = True
+
     cur_get_queue: Queue
     cur_res_queue: Queue
     cur_commit_queue: Queue
@@ -160,7 +162,7 @@ class Base:
     def _get_item(self,
         process_code: str,
         freezing_model: Union[Type[Step2FreezingElements], Type[Step3FreezingElements]],
-        exclude_params: dict,
+        exclude_params: dict | tuple,
         filter_params: dict,
     ) -> Union[bool, Elements]:
 
@@ -178,7 +180,7 @@ class Base:
     def _get_item_base(self,
         process_code: str,
         freezing_model: Union[Type[Step2FreezingElements], Type[Step3FreezingElements]],
-        exclude_params: dict,
+        exclude_params: dict | tuple,
         filter_params: dict,
     ) -> Union[bool, Elements]:
 

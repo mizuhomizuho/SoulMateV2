@@ -118,12 +118,14 @@ class Elements(models.Model):
     ava = models.TextField()
     time_created = models.DateTimeField(auto_now_add=True)
     time_updated = models.DateTimeField(auto_now=True)
+    time_last_active = models.DateTimeField(null=True)
 
     step1 = models.BooleanField(default=False, db_index=True)
     step2_parsed = models.BooleanField(default=False, db_index=True)
     step2_good = models.BooleanField(default=False, db_index=True)
     step2_continue = models.IntegerField(null=True, blank=True, db_index=True)
     step3_parsed = models.BooleanField(default=False, db_index=True)
+    step3_good = models.BooleanField(default=False, db_index=True)
 
     class Meta:
         verbose_name = 'Элемент'

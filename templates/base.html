@@ -11,8 +11,9 @@
     | <a href="/admin/">Admin</a>
     | <a href="/clear-cache/">Clear cache</a>
     | <a href="/catalog/">Catalog</a>
-    | <a href="/catalog/step3/s3-good/">Good</a>
+    | <a href="/catalog/step3/s3-good/">Good {{ good_count }}</a>
     <hr>
     {% block content %} {% endblock %}
+    <script src="{% static 'app_main/js/script.js' %}"></script>
 </body>
 </html>

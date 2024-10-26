@@ -48,7 +48,6 @@ class Step2Base(Base):
 			'inst': self,
 			'args': tuple(),
 		})
-		# self.commit_del_freezing()
 
 	def commit_del_freezing(self) -> None:
 
@@ -103,7 +102,6 @@ class Step2Base(Base):
 			'inst': self,
 			'args': tuple(),
 		})
-		# self.commit_set_no_city_base()
 
 	def commit_set_no_city_base(self) -> None:
 
@@ -121,7 +119,6 @@ class Step2Base(Base):
 			'inst': self,
 			'args': tuple(),
 		})
-		# self.commit_set_men_base()
 
 	def commit_set_men_base(self) -> None:
 
@@ -135,7 +132,6 @@ class Step2Base(Base):
 			'inst': self,
 			'args': (msg,),
 		})
-		# self.commit_set_continue_base(msg)
 
 	def commit_set_continue_base(self, msg: str) -> None:
 
@@ -155,7 +151,6 @@ class Step2Base(Base):
 			'inst': self,
 			'args': (vk_name, vk_age,),
 		})
-		# self.commit_set_good_base(vk_name, vk_age)
 
 	def commit_set_good_base(self, vk_name: str, vk_age: Optional[int]) -> None:
 
