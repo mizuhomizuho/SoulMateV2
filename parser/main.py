@@ -54,6 +54,7 @@ class Step1(Base):
         options = webdriver.ChromeOptions()
         # options.add_argument('--headless')
         options.add_argument('--disable-extensions')
+        # https://github.com/ultrafunkamsterdam/undetected-chromedriver
         # https://intoli.com/blog/not-possible-to-block-chrome-headless/chrome-headless-test.html
         options.add_argument('--disable-blink-features=AutomationControlled')
         options.add_argument(f'--user-data-dir={self.__chrome_user_data_dir}')

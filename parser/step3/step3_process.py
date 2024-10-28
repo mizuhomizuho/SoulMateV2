@@ -582,6 +582,8 @@ class Step3Process(Base):
             options = webdriver.ChromeOptions()
 
             options.add_argument('--headless')
+            # https://github.com/ultrafunkamsterdam/undetected-chromedriver
+            # https://intoli.com/blog/not-possible-to-block-chrome-headless/chrome-headless-test.html
             options.add_argument('--disable-blink-features=AutomationControlled')
             options.add_argument(f'--user-data-dir={self.__CHROME_USER_DATA_DIR_PREFIX}{self.__cur_chrome}')
             options.add_argument(f'--profile-directory={self.__CHROME_PROFILE_DIRECTORY}')
